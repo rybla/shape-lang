@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 import { AppState } from './AppState';
+import { renderApp } from './Rendering';
 import { Environment } from './shape/Environment';
 
 export type AppProps = {
@@ -8,14 +9,14 @@ export type AppProps = {
 }
 
 export default class App extends React.Component<AppProps, AppState> {
-  appEnvironment: AppState;
+  appState: AppState;
 
   constructor(props: AppProps) {
     super(props);
-    this.appEnvironment = new AppState();
+    this.appState = new AppState();
   }
 
   render(): JSX.Element {
-    return (<div></div>); // TODO
+    return renderApp(this.appState)
   }
 }
