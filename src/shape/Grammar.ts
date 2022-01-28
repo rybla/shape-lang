@@ -9,7 +9,7 @@ export type Term
   | {case: "let", label: Label, dom: Term, arg: Term, bod: Term}
   | {case: "app", app: Term, arg: Term}
   | {case: "var", dbl: Dbl}
-  | {case: "hole", hole: Hole}
+  | {case: "hole"}
 
 // A term index specifies a node in a Term AST.
 export type TermIx = {} // TODO
