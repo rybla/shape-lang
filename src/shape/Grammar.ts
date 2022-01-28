@@ -1,6 +1,6 @@
 import { List } from "immutable"
 
-export type Context = List<[Label, Term]>
+export type Context = List<[Label, Term , undefined | Term]>
 
 export type Term
   = {case: "pi", label: Label, dom: Term, cod: Term}
