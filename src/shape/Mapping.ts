@@ -1,4 +1,4 @@
-import { Context, Dbl, Hole, Label, Term } from "./Grammar";
+import { Context, Dbl, Label, Term } from "./Grammar";
 import { List } from "immutable"
 
 /** Define general mappings over terms which have a certian structure */
@@ -26,7 +26,7 @@ type Metadata <Env , Out>
   | {case: "let", label: Label, dom: Metadata<Env,Out>, arg: Metadata<Env,Out>, bod: Metadata<Env,Out>, val : Out}
   | {case: "app", app: Metadata<Env,Out>, arg: Metadata<Env,Out>, val : Out}
   | {case: "var", dbl: Dbl, val : Out}
-  | {case: "hole", hole: Hole, val : Out}
+  | {case: "hole", val : Out}
 
 // The question is how should metadata be stored and updated? When does it decide to recompute metadata?
 // Should the syntax transformations keep track of it, or should we diff the trees or something?

@@ -18,7 +18,3 @@ export type TermIx = {} // TODO
 export type Dbl = number;
 
 export type Label = {value: string};
-
-export type HoleId = number;
-
-export type Hole = {holeId: HoleId}
