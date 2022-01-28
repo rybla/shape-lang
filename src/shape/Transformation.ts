@@ -11,8 +11,12 @@ export function applyTransformation<Arg>(env: Environment, ix: TermIx, trans: Tr
 
 // transformations
 
+export function freshLabel(): Label {
+  return ({value: "x"});
+}
+
 export const placePi: Transformation<[]> = (env, ix, gamma, alpha, a, _) => {
-  let label: Label = "x";
+  let label: Label = freshLabel();
   let dom: Term = {case: "hole", hole: {holeId: env.get("freshHoleId")}};
   let cod: Term = {case: "hole", hole: {holeId: env.get("freshHoleId") + 1}};
   return [
@@ -23,7 +27,8 @@ export const placePi: Transformation<[]> = (env, ix, gamma, alpha, a, _) => {
 
 // TODO: placeLam, placeApp, placeHole
 
-export const placeVar: Transformation<Dbl> = (env, ix, gamma, alpha, a, dbl: number) => {
+// dbl: the Dbl of the variable to place
+export const placeVar: Transformation<Dbl> = (env, ix, gamma, alpha, a, dbl) => {
   if (dbl < gamma.size) {
     return [
       env,
