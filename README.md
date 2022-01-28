@@ -9,8 +9,6 @@ Henry
 
 - [ ] editor transformations
 - [ ] GUI editor
-  - translate to Typescript
-  - deploy via Haskell (somehow...)
 
 Jacob
 
