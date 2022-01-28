@@ -1,7 +1,35 @@
 // A transformation is a function that inputs a Term and outputs a Term.
 
-import { Ctx, Term } from "./Grammar";
+import { Context, Dbl, Label, Term, TermIx } from "./Grammar";
+import { Environment } from "./Environment";
 
-type State = {freshHoleId: number}
+type Transformation<Arg> = (env: Environment, ix: TermIx, gamma: Context, alpha: Term, a: Term, arg: Arg) => [Environment, Term] | undefined
 
-type Transformation = (state: State, gamma: Ctx, alpha: Term, a: Term) => [State, Term]
+export function applyTransformation<Arg>(env: Environment, ix: TermIx, trans: Transformation<Arg>, arg: Arg): Environment | undefined {
+  throw new Error("unimplemented");
+}
+
+// transformations
+
+export const placePi: Transformation<[]> = (env, ix, gamma, alpha, a, _) => {
+  let label: Label = "x";
+  let dom: Term = {case: "hole", hole: {holeId: env.get("freshHoleId")}};
+  let cod: Term = {case: "hole", hole: {holeId: env.get("freshHoleId") + 1}};
+  return [
+    env.set("freshHoleId", env.get("freshHoleId") + 2),
+    {case: "pi", label, dom, cod}
+  ];
+}
+
+// TODO: placeLam, placeApp, placeHole
+
+export const placeVar: Transformation<Dbl> = (env, ix, gamma, alpha, a, dbl: number) => {
+  if (dbl < gamma.size) {
+    return [
+      env,
+      {case: "var", dbl}
+    ];
+  } else {
+    return undefined;
+  }
+}
