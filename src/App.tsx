@@ -10,7 +10,7 @@ export type AppProps = {
 export default class App extends React.Component<AppProps, AppState> {
   appEnvironment: AppState;
 
-  constructor(props: Props) {
+  constructor(props: AppProps) {
     super(props);
     this.appEnvironment = new AppState();
   }
