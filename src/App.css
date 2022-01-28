@@ -1,38 +1,109 @@
 .App {
-  text-align: center;
+  padding: 10px;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* workspace */
+
+.workspace {
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* sidebar */
+
+.sidebar {
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.palette {
 }
 
-.App-link {
-  color: #61dafb;
+.console {
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.commandline {
+}
+
+/* grammar */
+
+/* term */
+
+.term {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.term.uni {
+}
+
+.term.pi {
+}
+
+.term.lam {
+}
+
+.term.let {
+  box-shadow: 0 0 0 1px black inset;
+}
+
+.let-arg {
+  display: block;
+}
+
+.let-bod {
+  display: block;
+}
+
+.term.app {
+}
+
+.term.var {
+}
+
+.term.hole {
+  box-shadow: 0 0 0 1px red inset;
+  color: red;
+}
+
+.label {
+  display: inline-block;
+
+  color: blue;
+}
+
+/* punctuation */
+
+.punctuation {
+  display: inline-block;
+  margin: 0 0.2em;
+
+  font-weight: bold;
+}
+
+.punctuation.period {
+}
+
+.punctuation.colon {
+}
+
+.punctuation.left-parenthesis {
+}
+
+.punctuation.right-parenthesis {
+}
+
+.punctuation.pi {
+}
+
+.punctuation.lambda {
+}
+
+.punctuation.let {
+}
+
+.punctuation.in {
+}
+
+.punctuation.assignment {
+}
+
+.punctuation.question-mark {
+  margin-right: 0;
 }
