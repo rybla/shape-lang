@@ -19,7 +19,3 @@ export default class App extends React.Component<AppProps, AppState> {
     return (<div></div>); // TODO
   }
 }
-
-export type Props = {
-
-}
