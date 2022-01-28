@@ -13,9 +13,10 @@ export type Term
 // A term index specifies a node in a Term AST.
 export type TermIx = {} // TODO
 
+// DeBruijn level
 export type Dbl = number;
 
-export type Label = string;
+export type Label = {value: string};
 
 export type HoleId = number;
 
