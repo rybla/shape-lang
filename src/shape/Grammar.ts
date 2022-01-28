@@ -1,14 +1,22 @@
 import { List } from "immutable"
 
-export type Ctx = List<Term>;
+export type Context = List<[Label, Term]>
 
 export type Term
-  = {case: "pi", var: Var, cod: Term}
-  | {case: "lam", var: Var, dom: Term, cod: Term}
+  = {case: "pi", label: Label, dom: Term, cod: Term}
+  | {case: "lam", label: Label, dom: Term, cod: Term}
+  | {case: "let", label: Label, dom: Term, arg: Term, bod: Term}
   | {case: "app", app: Term, arg: Term}
-  | {case: "var", var: Var}
+  | {case: "var", dbl: Dbl}
   | {case: "hole", hole: Hole}
 
-export type Var = {name: string, dbl: number}
+// A term index specifies a node in a Term AST.
+export type TermIx = {} // TODO
 
-export type Hole = {id: number}
+export type Dbl = number;
+
+export type Label = string;
+
+export type HoleId = number;
+
+export type Hole = {holeId: HoleId}
