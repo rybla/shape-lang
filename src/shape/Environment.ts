@@ -6,12 +6,10 @@ The environment contains all the global, mutable information necessary for typec
 */
 
 type EnvironmentProps = {
-  freshHoleId: HoleId,
   program: Term
 }
 
 export const defaultEnvironmentProps: EnvironmentProps = {
-  freshHoleId: 1,
   program: freshHole()
 }
 
