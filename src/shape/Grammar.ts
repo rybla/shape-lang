@@ -1,18 +1,20 @@
 import { List } from "immutable"
 
-// debruijnlevel => [label, type, value?]
-export type Context = List<[Label, Term , Term | undefined]>
-
-// A => Term
-export type Substitution<A> = List<[A, Term]>;
+// Term
 
 export type Term = TermUniverse | TermPi | TermLambda | TermLet | TermApplication | TermVariable | TermHole
+
+// Universe
 
 export type TermUniverse = {
   case: "universe",
   universelevel: UniverseLevel;
   format?: {} // TODO
 }
+
+export type UniverseLevel = number;
+
+// Pi
 
 export type TermPi = {
   case: "pi",
@@ -25,6 +27,8 @@ export type TermPi = {
   }
 }
 
+// Lambda
+
 export type TermLambda = {
   case: "lambda",
   label: Label,
@@ -35,6 +39,8 @@ export type TermLambda = {
     annotated: boolean
   }
 }
+
+// Let
 
 export type TermLet = {
   case: "let",
@@ -48,6 +54,8 @@ export type TermLet = {
   }
 }
 
+// Application
+
 export type TermApplication = {
   case: "application",
   applicant: Term,
@@ -57,11 +65,19 @@ export type TermApplication = {
   }
 }
 
+// Variable
+
 export type TermVariable = {
   case: "variable",
   debruijnlevel: DeBruijnLevel,
   format?: {} // TODO
 }
+
+export type DeBruijnLevel = number;
+
+export type Label = {value: string};
+
+// Hole
 
 export type TermHole = {
   case: "hole",
@@ -71,18 +87,25 @@ export type TermHole = {
   format?: {} // TODO
 }
 
-// Universe Level
-export type UniverseLevel = number;
-
-// DeBruijn Level
-export type DeBruijnLevel = number;
-
-// Variable Label
-export type Label = {value: string};
-
-// Hole Id
 export type Hole = {holeId: HoleId}
+
 export type HoleId = number;
+
+export function makeHole(hole: Hole, weakening: DeBruijnLevel = 0, substitution: Substitution<DeBruijnLevel> = List(), format?: {}): TermHole {
+  return {case: "hole", hole, weakening, substitution, format};
+}
+
+// Context
+
+// debruijnlevel => [label, type, value?]
+export type Context = List<[Label, Term , Term | undefined]>
+
+// Substitution
+
+// A => Term
+export type Substitution<A> = List<[A, Term]>;
+
+// Term Index
 
 // A term index specifies a node in a Term AST.
 export type TermIx = {} // TODO

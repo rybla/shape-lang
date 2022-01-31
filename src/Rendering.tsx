@@ -1,6 +1,6 @@
 import { List } from "immutable";
 import { AppState } from "./AppState";
-import { Dbl, Label, Term } from "./shape/Grammar";
+import { Label, Term } from "./shape/Grammar";
 
 export function renderApp(appState: AppState): JSX.Element {
   return (
@@ -68,7 +68,7 @@ const que = <span className="punctuation question-mark">?</span>;
 
 function renderTerm(labels: List<Label>, a: Term): JSX.Element {
   switch (a.case) {
-    case "uni":
+    case "universe":
       return <span className="term uni">U</span>;
     case "pi":
       return (
@@ -77,22 +77,22 @@ function renderTerm(labels: List<Label>, a: Term): JSX.Element {
           {pi}
           {renderLabel(a.label)}
           {col}
-          {renderTerm(labels, a.dom)}
+          {renderTerm(labels, a.domain)}
           {per}
-          {renderTerm(labels.insert(0, a.label), a.cod)}
+          {renderTerm(labels.insert(0, a.label), a.codomain)}
           {rpar}
         </span>
       );
-    case "lam":
+    case "lambda":
       return (
         <span className="term lam">
           {lpar}
           {lam}
           {renderLabel(a.label)}
           {col}
-          {renderTerm(labels, a.dom)}
+          {renderTerm(labels, a.domain)}
           {per}
-          {renderTerm(labels.insert(0, a.label), a.bod)}
+          {renderTerm(labels.insert(0, a.label), a.body)}
           {rpar}
         </span>
       );
@@ -103,27 +103,27 @@ function renderTerm(labels: List<Label>, a: Term): JSX.Element {
             {let_}
             {renderLabel(a.label)}
             {col}
-            {renderTerm(labels, a.dom)}
+            {renderTerm(labels, a.domain)}
             {ass}
-            {renderTerm(labels, a.arg)}
+            {renderTerm(labels, a.argument)}
             {in_}
           </span>
           <span className="let-bod">
-            {renderTerm(labels.insert(0, a.label), a.bod)}
+            {renderTerm(labels.insert(0, a.label), a.body)}
           </span>
         </span>
       );
-    case "app":
+    case "application":
       return (
         <span className="term app">
           {lpar}
-          {renderTerm(labels, a.app)}
-          {renderTerm(labels, a.arg)}
+          {renderTerm(labels, a.applicant)}
+          {renderTerm(labels, a.argument)}
           {rpar}
         </span>
       );
-    case "var":
-      return <span className="term var">{labels.get(a.dbl)}</span>;
+    case "variable":
+      return <span className="term var">{labels.get(a.debruijnlevel)}</span>;
     case "hole":
       return <span className="term hole">{que}</span>;
   }
