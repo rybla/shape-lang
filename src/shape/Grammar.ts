@@ -3,9 +3,16 @@ import { List } from "immutable"
 // debruijnlevel => [label, type, value?]
 export type Context = List<[Label, Term , Term | undefined]>
 
+// A => Term
 export type Substitution<A> = List<[A, Term]>;
 
-export type Term = TermPi | TermLambda | TermLet | TermApplication | TermVariable | TermHole
+export type Term = TermUniverse | TermPi | TermLambda | TermLet | TermApplication | TermVariable | TermHole
+
+export type TermUniverse = {
+  case: "universe",
+  universelevel: UniverseLevel;
+  format?: {} // TODO
+}
 
 export type TermPi = {
   case: "pi",
@@ -53,9 +60,7 @@ export type TermApplication = {
 export type TermVariable = {
   case: "variable",
   debruijnlevel: DeBruijnLevel,
-  format?: {
-    // TODO
-  }
+  format?: {} // TODO
 }
 
 export type TermHole = {
@@ -63,20 +68,21 @@ export type TermHole = {
   hole: Hole,
   weakening: DeBruijnLevel,
   substitution: Substitution<DeBruijnLevel>
-  format?: {
-    // TODO
-  }
+  format?: {} // TODO
 }
 
-// A term index specifies a node in a Term AST.
-export type TermIx = {} // TODO
+// Universe Level
+export type UniverseLevel = number;
 
-// DeBruijn level
+// DeBruijn Level
 export type DeBruijnLevel = number;
 
-// Variable label
+// Variable Label
 export type Label = {value: string};
 
 // Hole Id
 export type Hole = {holeId: HoleId}
 export type HoleId = number;
+
+// A term index specifies a node in a Term AST.
+export type TermIx = {} // TODO
