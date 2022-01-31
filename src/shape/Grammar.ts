@@ -81,18 +81,23 @@ export type Label = {value: string};
 
 export type TermHole = {
   case: "hole",
-  hole: Hole,
+  holesymbol: HoleSymbol,
   weakening: DeBruijnLevel,
   substitution: Substitution<DeBruijnLevel>
   format?: {} // TODO
 }
 
-export type Hole = {holeId: HoleId}
+export type HoleSymbol = Symbol
 
 export type HoleId = number;
 
-export function makeHole(hole: Hole, weakening: DeBruijnLevel = 0, substitution: Substitution<DeBruijnLevel> = List(), format?: {}): TermHole {
-  return {case: "hole", hole, weakening, substitution, format};
+export function makeHole(holesymbol: HoleSymbol, weakening: DeBruijnLevel = 0, substitution: Substitution<DeBruijnLevel> = List(), format?: {}): TermHole {
+  return {case: "hole", holesymbol, weakening, substitution, format};
+}
+
+export function freshHole(): TermHole {
+  const holesymbol: unique symbol = Symbol();
+  return makeHole(holesymbol);
 }
 
 // Context
