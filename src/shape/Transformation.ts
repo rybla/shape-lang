@@ -17,10 +17,10 @@ export function freshLabel(): Label {
 
 export const placePi: Transformation<[]> = (env, ix, gamma, alpha, a, _) => {
   let label: Label = freshLabel();
-  let dom: Term = {case: "hole", hole: {holeId: env.get("freshHoleId")}};
-  let cod: Term = {case: "hole", hole: {holeId: env.get("freshHoleId") + 1}};
+  let dom: Term = {case: "hole"};
+  let cod: Term = {case: "hole"};
   return [
-    env.set("freshHoleId", env.get("freshHoleId") + 2),
+    env,
     {case: "pi", label, dom, cod}
   ];
 }

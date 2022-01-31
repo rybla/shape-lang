@@ -1,4 +1,4 @@
-import { Context, Dbl, Hole, Label, Term } from "./Grammar";
+import { Context, Dbl, Label, Term } from "./Grammar";
 import { List } from "immutable"
 
 /** Define general mappings over terms which have a certian structure */
