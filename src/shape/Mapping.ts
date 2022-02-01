@@ -1,4 +1,4 @@
-import { Context, Dbl, Label, Term } from "./Grammar";
+import { Context, Dbl, HoleId, Label, Term } from "./Grammar";
 import { List } from "immutable"
 
 /** Define general mappings over terms which have a certian structure */
@@ -17,8 +17,17 @@ type Mapping <Env , Out> = {
     let : (label : Label , dom : Out, arg : Out, bod : (env : Env) => Out) => Out
     app : (o1 : Out, o2 : Out) => Out,
     var : (E : Env) => Out,
-    hole : Out
+    hole : (id : HoleId, subs : List<Term>, weak : number) => Out
 }
+
+type SyntaxMapping <Env> = {
+
+}
+
+
+// PLAN: don't do mcbride stuff for now. Just implement renaming, substitution, unification.
+// But DO figure out if all weakens after all subs is correct.
+----------------------------------------------------------------
 
 type Metadata <Env , Out>
   = {case : "uni" , val : Out}
@@ -27,7 +36,7 @@ type Metadata <Env , Out>
   | {case: "let", label: Label, dom: Metadata<Env,Out>, arg: Metadata<Env,Out>, bod: Metadata<Env,Out>, val : Out}
   | {case: "app", app: Metadata<Env,Out>, arg: Metadata<Env,Out>, val : Out}
   | {case: "var", dbl: Dbl, val : Out}
-  | {case: "hole", val : Out}
+  | {case: "hole", id: HoleId, subs : List<Term>, weak : number, val : Out}
 
 // The question is how should metadata be stored and updated? When does it decide to recompute metadata?
 // Should the syntax transformations keep track of it, or should we diff the trees or something?
@@ -54,7 +63,7 @@ function mapTerm <Env , Out> (env : List<Env>, t : Term, mapping : Mapping<Env, 
         }
         return mapping.var(v);
     } else if (t.case == "hole"){
-        mapping.hole;
+        mapping.hole(t.id, t.subs, t.weak);
     }
 }
 
