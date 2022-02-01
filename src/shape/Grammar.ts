@@ -9,7 +9,9 @@ export type Term = TermUniverse | TermPi | TermLambda | TermLet | TermApplicatio
 export type TermUniverse = {
   case: "universe",
   universelevel: UniverseLevel;
-  format?: {} // TODO
+  format?: {
+    indented: boolean
+  }
 }
 
 export type UniverseLevel = number;
@@ -70,7 +72,9 @@ export type TermApplication = {
 export type TermVariable = {
   case: "variable",
   debruijnlevel: DeBruijnLevel,
-  format?: {} // TODO
+  format?: {
+    indented: boolean
+  }
 }
 
 export type DeBruijnLevel = number;
@@ -84,14 +88,16 @@ export type TermHole = {
   holesymbol: HoleSymbol,
   weakening: DeBruijnLevel,
   substitution: Substitution<DeBruijnLevel>
-  format?: {} // TODO
+  format?: {
+    indented: boolean
+  }
 }
 
 export type HoleSymbol = Symbol
 
 export type HoleId = number;
 
-export function makeHole(holesymbol: HoleSymbol, weakening: DeBruijnLevel = 0, substitution: Substitution<DeBruijnLevel> = List(), format?: {}): TermHole {
+export function makeHole(holesymbol: HoleSymbol, weakening: DeBruijnLevel = 0, substitution: Substitution<DeBruijnLevel> = List(), format?: {indented: false}): TermHole {
   return {case: "hole", holesymbol, weakening, substitution, format};
 }
 
