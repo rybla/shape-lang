@@ -25,85 +25,67 @@
 
 /* term */
 
-.term {
-  display: inline-block;
+/* .let-domain,
+.let-argument {
   vertical-align: top;
-}
-
-.term.uni {
-}
-
-.term.pi {
-}
-
-.term.lam {
-}
-
-.term.let {
-  box-shadow: 0 0 0 1px black inset;
-}
-
-.let-arg {
-  display: block;
-}
-
-.let-bod {
-  display: block;
-}
-
-.term.app {
-}
-
-.term.var {
-}
-
-.term.hole {
-  box-shadow: 0 0 0 1px red inset;
-  color: red;
-}
-
-.label {
   display: inline-block;
+  margin-left: 2em;
+} */
 
+.token {
+  display: inline-block;
+  margin: 0.1em 0.1em;
+}
+
+.hole {
+  display: inline-block;
+  margin: 0 0.1em;
+  box-shadow: 0 0 0 1px red;
+}
+
+.token.label {
   color: blue;
 }
 
 /* punctuation */
 
-.punctuation {
-  display: inline-block;
-  margin: 0 0.2em;
-
+.token.punctuation {
   font-weight: bold;
 }
 
-.punctuation.period {
+.token.punctuation.period {
 }
 
-.punctuation.colon {
+.token.punctuation.colon {
 }
 
-.punctuation.left-parenthesis {
+.token.punctuation.left-paren {
 }
 
-.punctuation.right-parenthesis {
+.token.punctuation.right-paren {
 }
 
-.punctuation.pi {
+.token.punctuation.pi {
 }
 
-.punctuation.lambda {
+.token.punctuation.lambda {
 }
 
-.punctuation.let {
+.token.punctuation.let {
 }
 
-.punctuation.in {
+.token.punctuation.in {
 }
 
-.punctuation.assignment {
+.token.punctuation.assignment {
 }
 
-.punctuation.question-mark {
-  margin-right: 0;
+.token.punctuation.question-mark {
+  margin-top: 0;
+  margin-bottom: 0;
+  color: red;
+}
+
+.token.punctuation.space {
+  width: 0.6em;
 }

@@ -1,11 +1,12 @@
 // A transformation is a function that inputs a Term and outputs a Term.
 
-import { Context, Dbl, Label, Term, TermIx } from "./Grammar";
+import { Context, DeBruijnLevel, freshHole, Label, makeHole, Term, TermHole, TermIx } from "./Grammar";
 import { Environment } from "./Environment";
+import { List } from "immutable";
 
-type Transformation<Arg> = (env: Environment, ix: TermIx, gamma: Context, alpha: Term, a: Term, arg: Arg) => [Environment, Term] | undefined
+type Transformation = (env: Environment, ix: TermIx, gamma: Context, alpha: Term, a: Term) => Term | undefined
 
-export function applyTransformation<Arg>(env: Environment, ix: TermIx, trans: Transformation<Arg>, arg: Arg): Environment | undefined {
+export function applyTransformation(env: Environment, ix: TermIx, trans: Transformation): Environment | undefined {
   throw new Error("unimplemented");
 }
 
@@ -15,26 +16,21 @@ export function freshLabel(): Label {
   return ({value: "x"});
 }
 
-export const placePi: Transformation<[]> = (env, ix, gamma, alpha, a, _) => {
-  let label: Label = freshLabel();
-  let dom: Term = {case: "hole"};
-  let cod: Term = {case: "hole"};
-  return [
-    env,
-    {case: "pi", label, dom, cod}
-  ];
+export const placePi: Transformation = (env, ix, gamma, alpha, a) => {
+  return {case: "pi", label: freshLabel(), domain: freshHole(), codomain: freshHole()};
 }
 
-// TODO: placeLam, placeApp, placeHole
-
-// dbl: the Dbl of the variable to place
-export const placeVar: Transformation<Dbl> = (env, ix, gamma, alpha, a, dbl) => {
-  if (dbl < gamma.size) {
-    return [
-      env,
-      {case: "var", dbl}
-    ];
-  } else {
-    return undefined;
+export function placeVar(debruijnlevel: DeBruijnLevel): Transformation {
+  return (env, ix, gamma, alpha, a) => {
+    if (0 < debruijnlevel && debruijnlevel < gamma.size) {
+      return {case: "variable", debruijnlevel};
+    } else {
+      return undefined;
+    }
   }
+}
+
+// i.e. dig
+export const placeHole: Transformation = (env, ix, gamma, alpha, a) => {
+  return freshHole();
 }

@@ -1,5 +1,5 @@
-import { Record } from "immutable";
-import { Term } from "./Grammar";
+import { List, Record } from "immutable";
+import { freshHole, HoleId, makeHole, Term } from "./Grammar";
 
 /*
 The environment contains all the global, mutable information necessary for typechecking and transformation.
@@ -10,53 +10,39 @@ type EnvironmentProps = {
 }
 
 export const defaultEnvironmentProps: EnvironmentProps = {
-  // program: {case: "hole"}
   program: {
     case: "let",
     label: {value: "x"},
-    dom: {case: "hole"},
-    arg: {
+    domain: {
       case: "let",
-      label: {value: "y"},
-      dom: {case: "hole"},
-      arg: {
-        case: "let",
-        label: {value: "z"},
-        dom: {case: "hole"},
-        arg: {case: "hole"},
-        bod: {case: "hole"}
-      },
-      bod: {case: "hole"}
+      label: {value: "x"},
+      domain: freshHole(),
+      argument: freshHole(),
+      body: freshHole(),
     },
-    bod: {
+    argument: {
       case: "let",
-      label: {value: "w"},
-      dom: {case: "hole"},
-      arg: {case: "hole"},
-      bod: {
+      label: {value: "x"},
+      domain: freshHole(),
+      argument: freshHole(),
+      body: {
+        case: "pi",
+        label: {value: "y"},
+        domain: freshHole(),
+        codomain: freshHole(),
+      }
+    },
+    body: {
+      case: "let",
+      label: {value: "x"},
+      domain: freshHole(),
+      argument: freshHole(),
+      body: {
         case: "let",
-        label: {value: "w"},
-        dom: {case: "hole"},
-        arg: {case: "hole"},
-        bod: {
-          case: "let",
-          label: {value: "w"},
-          dom: {case: "hole"},
-          arg: {case: "hole"},
-          bod: {
-            case: "let",
-            label: {value: "w"},
-            dom: {case: "hole"},
-            arg: {case: "hole"},
-            bod: {
-              case: "let",
-              label: {value: "w"},
-              dom: {case: "hole"},
-              arg: {case: "hole"},
-              bod: {case: "hole"}
-            }
-          }
-        }
+        label: {value: "x"},
+        domain: freshHole(),
+        argument: freshHole(),
+        body: freshHole()
       }
     }
   }
