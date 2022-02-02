@@ -8,9 +8,11 @@ type Debruin = Int
 type Name = String
 type HoleId = Int
 data Term = U | Var Debruin | Pi Name Term Term | Lam Name Term
-    | App Term Term | Hole HoleId
+    | App Term Term | THole HoleId
     | Let Name Term Term Term
     deriving (Show, Eq)
+
+newtype Hole = Hole HoleId {-sub-} {-weakening-}
 
 data Nf = NLam Name Nf | Ne Ne | NLet Nf Type Nf | Type Type
     deriving (Show, Eq)
@@ -21,7 +23,7 @@ type Ne2 = (Either Debruin HoleId, [Nf])
 data Type = NU | NPi Name Type Type | TNe Ne
     deriving (Show, Eq)
 
-data Sem = SU | SPi Name Sem (Sem -> Sem) | SNe Ne | SFun (Sem -> Sem) | SHole HoleId
+data Sem = SU | SPi Name Sem (Sem -> Sem) | SNe Ne | SFun (Sem -> Sem) | SHole HoleId {-Semsub-} {-Semweak-}
 
 type Context = [(Type, Maybe Nf)]
 type HoleCtx = Map HoleId Type
@@ -31,12 +33,20 @@ type Ren = [Debruin]
 
 type SemHoleSub = Map HoleId Sem
 
+type SynSub = [Nf] -- should be Nf?
+
+forget :: Nf -> Term
+forget = undefined -- TODO
+
+evalSub :: SynSub -> Sub -> SemHoleSub -> Sub
+evalSub sSub sub hsub = Prelude.map (\t -> eval (forget t) sub hsub) sSub
+
 eval :: Term -> Sub -> SemHoleSub -> Sem
 eval U sub hsub = SU 
 eval (Var x) sub hsub = sub !! x
 eval (Pi x a b) sub hsub = SPi x (eval a sub hsub) (\x -> eval b (sub ++ [x]) hsub) 
 eval (Lam x e) sub hsub = SFun (\a -> eval e (sub ++ [a]) hsub) 
-eval (Hole x) sub hsub = hsub ! x
+eval (THole x) sub hsub = hsub ! x -- TODO: we need to incorporate sub here. Incorrect if sub not used.
 eval (Let x e t body) sub hsub
     = eval body (sub ++ [reflect (length sub) (eval t sub hsub) (NVar (length sub))]) hsub 
 eval (App e1 e2) sub hsub = 
@@ -64,6 +74,10 @@ reify ctx (SNe te) _ = error "shouldn't get here"
 reify ctx (SHole x) (SNe e) = Ne e
 reify ctx (SHole x) _ = error "shouldn't get here"
 reify ctx (SFun f) s = error "shouldn't get here, SFun isn't a type"
+
+-- first argument is types for the substitutions
+reifySub :: Int -> [Sem] -> Sub -> SynSub
+reifySub ctx ts sub = Prelude.map (\(t, s) -> reify ctx t s) (zip ts sub)
 
 reflect :: Int -> Sem -> Ne -> Sem
 reflect ctx (SPi x a b) e = SFun (\x -> reflect ctx (b x) (NApp e (reify ctx a x)))
