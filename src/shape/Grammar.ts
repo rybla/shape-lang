@@ -2,15 +2,15 @@ import { List } from "immutable"
 
 // Term
 
-export type Term
-  = {case: "uni"}
-  | {case: "pi", label: Label, dom: Term, cod: Term}
-  | {case: "lam", label: Label, dom: Term, bod: Term}
-  | {case: "let", label: Label, dom: Term, arg: Term, bod: Term}
-  | {case: "app", app: Term, arg: Term}
-  | {case: "var", dbl: Dbl}
-  | {case: "hole", id: HoleId, subs : List<Term>, weak : number}
-// export type Term = TermUniverse | TermPi | TermLambda | TermLet | TermApplication | TermVariable | TermHole
+// export type Term
+//   = {case: "uni"}
+//   | {case: "pi", label: Label, dom: Term, cod: Term}
+//   | {case: "lam", label: Label, dom: Term, bod: Term}
+//   | {case: "let", label: Label, dom: Term, arg: Term, bod: Term}
+//   | {case: "app", app: Term, arg: Term}
+//   | {case: "var", dbl: Dbl}
+//   | {case: "hole", id: HoleId, subs : List<Term>, weak : number}
+export type Term = TermUniverse | TermPi | TermLambda | TermLet | TermApplication | TermVariable | TermHole
 
 // Universe
 
@@ -89,9 +89,6 @@ export type DeBruijnLevel = number;
 
 export type Label = {value: string};
 
-<<<<<<< HEAD
-export type HoleId = Symbol;
-=======
 // Hole
 
 export type TermHole = {
@@ -131,4 +128,3 @@ export type Substitution<A> = List<[A, Term]>;
 
 // A term index specifies a node in a Term AST.
 export type TermIx = {} // TODO
->>>>>>> 31c5315847a6bb498da0a66a3b55b31a7b3af997

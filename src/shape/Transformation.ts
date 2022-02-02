@@ -1,8 +1,7 @@
 // A transformation is a function that inputs a Term and outputs a Term.
 
-import { Context, DeBruijnLevel, freshHole, Label, makeHole, Term, TermHole, TermIx } from "./Grammar";
+import { Context, DeBruijnLevel, freshHole, Label, Term, TermIx } from "./Grammar";
 import { Environment } from "./Environment";
-import { List } from "immutable";
 
 type Transformation = (env: Environment, ix: TermIx, gamma: Context, alpha: Term, a: Term) => Term | undefined
 
