@@ -1,12 +1,9 @@
-import React from 'react';
-import './App.css';
-import { AppState } from './AppState';
-import { renderApp } from './Rendering';
-import { Environment } from './shape/Environment';
+import React from "react";
+import "./App.css";
+import { AppState } from "./AppState";
+import { renderApp } from "./Rendering";
 
-export type AppProps = {
-
-}
+export type AppProps = {};
 
 export default class App extends React.Component<AppProps, AppState> {
   appState: AppState;
@@ -17,6 +14,6 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   render(): JSX.Element {
-    return renderApp(this.appState)
+    return renderApp(this);
   }
 }

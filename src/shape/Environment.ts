@@ -1,5 +1,5 @@
 import { List, Record } from "immutable";
-import { freshHoleTerm, HoleId, makeHole, Term, TermIx } from "./Grammar";
+import { freshHoleTerm, Term, TermIx } from "./Grammar";
 
 /*
 The environment contains all the global, mutable information necessary for typechecking and transformation.

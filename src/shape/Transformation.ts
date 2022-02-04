@@ -1,6 +1,6 @@
 // A transformation is a function that inputs a Term and outputs a Term.
 
-import { Context, DeBruijnLevel, freshHole, freshHoleTerm, Label, Term, TermIx, TermIxStep } from "./Grammar";
+import { Context, DeBruijnLevel, freshHoleTerm, Label, Term, TermIx, TermIxStep } from "./Grammar";
 import { Environment } from "./Environment";
 import { List } from "immutable";
 import { infer } from "./Typing";
@@ -12,7 +12,7 @@ export function applyTransformation(env: Environment, trans: Transformation): En
     if (ix.size === 0 ) {
       let b = trans(env, gamma, infer(gamma, a), a);
       if (b) {
-        substituteTermIx(env.program, ix, b);
+        return env.set("program", substituteTermIx(env.program, ix, b));
       } else {
         return undefined;
       }
@@ -106,7 +106,7 @@ export const placeHole: Transformation = (env, gamma, alpha, a) => {
 
 // a[ix => b]
 export function substituteTermIx(a: Term, ix: TermIx, b: Term): Term {
-  if (ix.size == 0) {
+  if (ix.size === 0) {
     return b;
   } else {
     let step = ix.last() as TermIxStep;

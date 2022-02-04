@@ -1,32 +1,32 @@
 import { List } from "immutable";
 import React, { MouseEventHandler } from "react";
-import { AppState } from "./AppState";
+import App from "./App";
 import { Environment } from "./shape/Environment";
 import { Label, Term, Hole, TermIx } from "./shape/Grammar";
 import { applyTransformation, placePi } from "./shape/Transformation";
 
-export function renderApp(appState: AppState): JSX.Element {
+export function renderApp(app: App): JSX.Element {
   return (
     <div className="App">
-      {renderWorkspace(appState)}
+      {renderWorkspace(app)}
       <div className="sidebar">
-        {renderPalette(appState)}
-        {renderConsole(appState)}
-        {renderCommandLine(appState)}
+        {renderPalette(app)}
+        {renderConsole(app)}
+        {renderCommandLine(app)}
       </div>
     </div>
   );
 }
 
-function renderWorkspace(appState: AppState): JSX.Element {
+function renderWorkspace(app: App): JSX.Element {
   return (
     <div className="workspace">
-      {renderProgram(appState, appState.environment.get("program"))}
+      {renderProgram(app, app.appState.environment.get("program"))}
     </div>
   );
 }
 
-function renderPalette(appState: AppState): JSX.Element {
+function renderPalette(app: App): JSX.Element {
   let options: List<{
     label: string;
     onClick: MouseEventHandler<HTMLDivElement>;
@@ -34,17 +34,14 @@ function renderPalette(appState: AppState): JSX.Element {
     {
       label: "pi",
       onClick: (event) => {
-        console.log("before");
-        console.log("focus", appState.environment.focus);
-        console.log("program", appState.environment.program);
-        let env: Environment = applyTransformation(
-          appState.environment,
+        let envNew = applyTransformation(
+          app.appState.environment,
           placePi
         ) as Environment;
-        console.log("after");
-        console.log("focus", env.focus);
-        console.log("program", env.program);
-        if (env !== undefined) appState.environment = env;
+        if (envNew !== undefined) {
+          app.appState.environment = envNew;
+          app.setState(app.appState);
+        }
       },
     },
   ]);
@@ -59,7 +56,7 @@ function renderPalette(appState: AppState): JSX.Element {
   );
 }
 
-function renderConsole(appState: AppState): JSX.Element {
+function renderConsole(app: App): JSX.Element {
   return (
     <div className="console">
       {}
@@ -68,7 +65,7 @@ function renderConsole(appState: AppState): JSX.Element {
   );
 }
 
-function renderCommandLine(appState: AppState): JSX.Element {
+function renderCommandLine(app: App): JSX.Element {
   return (
     <div className="commandline">
       {}
@@ -77,7 +74,7 @@ function renderCommandLine(appState: AppState): JSX.Element {
   );
 }
 
-function renderProgram(appState: AppState, program: Term): JSX.Element {
+function renderProgram(app: App, program: Term): JSX.Element {
   // punctuation
   const br = <br></br>;
   const period = <span className="token punctuation period">.</span>;
@@ -209,7 +206,6 @@ function renderProgram(appState: AppState, program: Term): JSX.Element {
       }
       case "neutral": {
         let iSub = a.format?.indented ? i + 1 : i;
-        console.log(a.format);
         if (a.arguments.size === 0) {
           return (a.format?.indented ? [br, indent(i)] : []).concat(
             typeof a.applicant === "number"

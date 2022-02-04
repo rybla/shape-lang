@@ -1,4 +1,4 @@
-import { Context, Term, TermUniverse } from "./Grammar";
+import { Context, freshHoleTerm, Term, TermUniverse } from "./Grammar";
 
 // Checks that `a` has type `alpha`.
 export function check(gamma: Context, a: Term, alpha: Term): boolean {
@@ -23,7 +23,7 @@ export function infer(gamma: Context, a: Term): Term {
       return infer(gamma.push([a.label, a.domain, a.argument]), a.body);
     }
     case "neutral": {
-      throw new Error();
+      return freshHoleTerm();
     }
   }
 }
