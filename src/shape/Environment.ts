@@ -1,48 +1,57 @@
 import { List, Record } from "immutable";
-import { freshHole, HoleId, makeHole, Term } from "./Grammar";
+import { freshHoleTerm, HoleId, makeHole, Term, TermIx } from "./Grammar";
 
 /*
 The environment contains all the global, mutable information necessary for typechecking and transformation.
 */
 
 type EnvironmentProps = {
-  program: Term
+  program: Term,
+  focus: TermIx
 }
 
 export const defaultEnvironmentProps: EnvironmentProps = {
+  focus: List(),
+  // program: {
+  //   case: "let",
+  //   label: {value: "x"},
+  //   domain: freshHoleTerm(),
+  //   argument: freshHoleTerm(),
+  //   body: freshHoleTerm()
+  // }
   program: {
     case: "let",
     label: {value: "x"},
     domain: {
       case: "let",
       label: {value: "x"},
-      domain: freshHole(),
-      argument: freshHole(),
-      body: freshHole(),
+      domain: freshHoleTerm(),
+      argument: freshHoleTerm(),
+      body: freshHoleTerm(),
     },
     argument: {
       case: "let",
       label: {value: "x"},
-      domain: freshHole(),
-      argument: freshHole(),
+      domain: freshHoleTerm(),
+      argument: freshHoleTerm(),
       body: {
         case: "pi",
         label: {value: "y"},
-        domain: freshHole(),
-        codomain: freshHole(),
+        domain: freshHoleTerm(),
+        codomain: freshHoleTerm(),
       }
     },
     body: {
       case: "let",
       label: {value: "x"},
-      domain: freshHole(),
-      argument: freshHole(),
+      domain: freshHoleTerm(),
+      argument: freshHoleTerm(),
       body: {
         case: "let",
         label: {value: "x"},
-        domain: freshHole(),
-        argument: freshHole(),
-        body: freshHole()
+        domain: freshHoleTerm(),
+        argument: freshHoleTerm(),
+        body: freshHoleTerm()
       }
     }
   }

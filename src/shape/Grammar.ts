@@ -10,7 +10,7 @@ import { List } from "immutable"
 //   | {case: "app", app: Term, arg: Term}
 //   | {case: "var", dbl: Dbl}
 //   | {case: "hole", id: HoleId, subs : List<Term>, weak : number}
-export type Term = TermUniverse | TermPi | TermLambda | TermLet | TermApplication | TermVariable | TermHole
+export type Term = TermUniverse | TermPi | TermLambda | TermLet | TermNeutral
 
 // Universe
 
@@ -64,22 +64,12 @@ export type TermLet = {
   }
 }
 
-// Application
+// Neutral
 
-export type TermApplication = {
-  case: "application",
-  applicant: Term,
-  argument: Term,
-  format?: {
-    indented: boolean
-  }
-}
-
-// Variable
-
-export type TermVariable = {
-  case: "variable",
-  debruijnlevel: DeBruijnLevel,
+export type TermNeutral = {
+  case: "neutral",
+  applicant: DeBruijnLevel | Hole,
+  arguments: List<Term>,
   format?: {
     indented: boolean
   }
@@ -91,7 +81,7 @@ export type Label = {value: string};
 
 // Hole
 
-export type TermHole = {
+export type Hole = {
   case: "hole",
   holesymbol: HoleSymbol,
   weakening: DeBruijnLevel,
@@ -105,14 +95,20 @@ export type HoleSymbol = Symbol
 
 export type HoleId = number;
 
-export function makeHole(holesymbol: HoleSymbol, weakening: DeBruijnLevel = 0, substitution: Substitution<DeBruijnLevel> = List(), format?: {indented: false}): TermHole {
+export function makeHole(holesymbol: HoleSymbol, weakening: DeBruijnLevel = 0, substitution: Substitution<DeBruijnLevel> = List(), format?: {indented: false}): Hole {
   return {case: "hole", holesymbol, weakening, substitution, format};
 }
 
-export function freshHole(): TermHole {
+export function freshHole(): Hole {
   const holesymbol: unique symbol = Symbol();
   return makeHole(holesymbol);
 }
+
+export function freshHoleTerm(): Term {
+  return {case: "neutral", applicant: freshHole(), arguments: List()}
+}
+
+
 
 // Context
 
@@ -127,4 +123,19 @@ export type Substitution<A> = List<[A, Term]>;
 // Term Index
 
 // A term index specifies a node in a Term AST.
-export type TermIx = {} // TODO
+export type TermIx = List<TermIxStep>;
+export type TermIxStep
+  = {case: "pi domain"} | {case: "pi codomain"}
+  | {case: "lambda domain"} | {case: "lambda body"}
+  | {case: "let domain"} | {case: "let argument"} | {case: "let body"}
+  | {case: "application argument", iArg: number}
+
+  export function compareTermIx(ix1: TermIx, ix2: TermIx): boolean {
+    if (ix1.size !== ix2.size) return false;
+    for (let i = 0; i < ix1.size; i ++) {
+      if (ix1.get(i) !== ix2.get(i)) {
+        return false;
+      }
+    }
+    return true;
+  }

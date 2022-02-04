@@ -1,3 +1,8 @@
+body {
+  /* background-color: black; */
+  /* color: white; */
+}
+
 .App {
   padding: 10px;
 }
@@ -10,9 +15,29 @@
 /* sidebar */
 
 .sidebar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: 200px;
+
+  box-shadow: 0 0 0 1px black inset;
 }
 
 .palette {
+  margin-top: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.palette-option {
+  margin-bottom: 10px;
+  padding: 5px 5px;
+  box-shadow: 0 0 0 1px black inset;
+}
+
+.palette-option:hover {
+  cursor: pointer;
 }
 
 .console {
@@ -43,8 +68,11 @@
   box-shadow: 0 0 0 1px red;
 }
 
+.hole.focussed {
+  box-shadow: 0 0 0 1px green;
+}
+
 .token.label {
-  color: blue;
 }
 
 /* punctuation */
