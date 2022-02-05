@@ -21,7 +21,7 @@ export function renderApp(app: App): JSX.Element {
 function renderWorkspace(app: App): JSX.Element {
   return (
     <div className="workspace">
-      {renderProgram(app, app.appState.environment.get("program"))}
+      {renderProgram(app, app.appState.environment.program)}
     </div>
   );
 }
@@ -39,8 +39,11 @@ function renderPalette(app: App): JSX.Element {
           placePi
         ) as Environment;
         if (envNew !== undefined) {
+          console.log("transformation success");
           app.appState.environment = envNew;
           app.setState(app.appState);
+        } else {
+          console.log("transformation failure");
         }
       },
     },
@@ -210,7 +213,7 @@ function renderProgram(app: App, program: Term): JSX.Element {
           return (a.format?.indented ? [br, indent(i)] : []).concat(
             typeof a.applicant === "number"
               ? [renderLabel(labels.get(a.applicant) as Label)]
-              : [renderHole(a.applicant)]
+              : [renderHole(a.applicant, ix)]
           );
         } else {
           return (a.format?.indented ? [br, indent(i)] : [])
@@ -218,7 +221,7 @@ function renderProgram(app: App, program: Term): JSX.Element {
             .concat(
               typeof a.applicant === "number"
                 ? [renderLabel(labels.get(a.applicant) as Label)]
-                : [renderHole(a.applicant)]
+                : [renderHole(a.applicant, ix)]
             )
             .concat(
               a.arguments
@@ -239,8 +242,16 @@ function renderProgram(app: App, program: Term): JSX.Element {
     }
   }
 
-  function renderHole(hole: Hole): JSX.Element {
-    return <span className="hole">{question}</span>;
+  function renderHole(hole: Hole, ix: TermIx): JSX.Element {
+    let onClick: MouseEventHandler<HTMLSpanElement> = (event) => {
+      app.appState.environment = app.appState.environment.set("focus", ix);
+      app.setState(app.appState);
+    };
+    return (
+      <span className="hole" onClick={onClick}>
+        {question}
+      </span>
+    );
   }
 
   function renderLabel(label: Label): JSX.Element {

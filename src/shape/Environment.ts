@@ -12,6 +12,7 @@ type EnvironmentProps = {
 
 export const defaultEnvironmentProps: EnvironmentProps = {
   focus: List(),
+  program: freshHoleTerm()
   // program: {
   //   case: "let",
   //   label: {value: "x"},
@@ -19,42 +20,42 @@ export const defaultEnvironmentProps: EnvironmentProps = {
   //   argument: freshHoleTerm(),
   //   body: freshHoleTerm()
   // }
-  program: {
-    case: "let",
-    label: {value: "x"},
-    domain: {
-      case: "let",
-      label: {value: "x"},
-      domain: freshHoleTerm(),
-      argument: freshHoleTerm(),
-      body: freshHoleTerm(),
-    },
-    argument: {
-      case: "let",
-      label: {value: "x"},
-      domain: freshHoleTerm(),
-      argument: freshHoleTerm(),
-      body: {
-        case: "pi",
-        label: {value: "y"},
-        domain: freshHoleTerm(),
-        codomain: freshHoleTerm(),
-      }
-    },
-    body: {
-      case: "let",
-      label: {value: "x"},
-      domain: freshHoleTerm(),
-      argument: freshHoleTerm(),
-      body: {
-        case: "let",
-        label: {value: "x"},
-        domain: freshHoleTerm(),
-        argument: freshHoleTerm(),
-        body: freshHoleTerm()
-      }
-    }
-  }
+  // program: {
+  //   case: "let",
+  //   label: {value: "x"},
+  //   domain: {
+  //     case: "let",
+  //     label: {value: "x"},
+  //     domain: freshHoleTerm(),
+  //     argument: freshHoleTerm(),
+  //     body: freshHoleTerm(),
+  //   },
+  //   argument: {
+  //     case: "let",
+  //     label: {value: "x"},
+  //     domain: freshHoleTerm(),
+  //     argument: freshHoleTerm(),
+  //     body: {
+  //       case: "pi",
+  //       label: {value: "y"},
+  //       domain: freshHoleTerm(),
+  //       codomain: freshHoleTerm(),
+  //     }
+  //   },
+  //   body: {
+  //     case: "let",
+  //     label: {value: "x"},
+  //     domain: freshHoleTerm(),
+  //     argument: freshHoleTerm(),
+  //     body: {
+  //       case: "let",
+  //       label: {value: "x"},
+  //       domain: freshHoleTerm(),
+  //       argument: freshHoleTerm(),
+  //       body: freshHoleTerm()
+  //     }
+  //   }
+  // }
 }
 
 export class Environment extends Record(defaultEnvironmentProps) {}

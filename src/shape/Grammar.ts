@@ -139,3 +139,19 @@ export type TermIxStep
     }
     return true;
   }
+
+// Show
+
+export function showTerm(a: Term, labels: List<Label> = List()): string {
+  switch (a.case) {
+    case "universe": return `U[${a.universelevel}]`;
+    case "pi": return `(Π ${a.label.value} : ${showTerm(a.domain, labels)} . ${showTerm(a.codomain, labels.push(a.label))})`;
+    case "lambda": return `(λ ${a.label.value} : ${showTerm(a.domain, labels)} . ${showTerm(a.body, labels.push(a.label))})`;
+    case "let": return `(let ${a.label.value} : ${showTerm(a.domain, labels)} = ${showTerm(a.argument, labels)} in ${showTerm(a.body, labels.push(a.label))})`;
+    case "neutral": {
+      let f = typeof(a.applicant) === "number" ? (labels.get(a.applicant as number) as Label).value : "?";
+      if (a.arguments.size === 0) return f;
+      else return `(${f} ${a.arguments.map(b => showTerm(b, labels)).reduce((a, b) => `${a} ${b}`)})`;
+    }
+  }
+}
