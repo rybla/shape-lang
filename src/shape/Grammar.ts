@@ -33,7 +33,7 @@ export type TermPi = {
   codomain: Term,
   format?: {
     indented: boolean,
-    annotated: boolean
+    unannotated: boolean
   }
 }
 
@@ -46,7 +46,7 @@ export type TermLambda = {
   body: Term,
   format?: {
     indented: boolean,
-    annotated: boolean
+    unannotated: boolean
   }
 }
 
@@ -60,7 +60,7 @@ export type TermLet = {
   body: Term,
   format?: {
     indented: boolean,
-    annotated: boolean
+    unannotated: boolean
   }
 }
 
@@ -68,7 +68,7 @@ export type TermLet = {
 
 export type TermNeutral = {
   case: "neutral",
-  applicant: DeBruijnLevel | Hole,
+  applicant: {case: "variable", debruijnlevel: DeBruijnLevel} | {case: "hole", hole: Hole},
   arguments: List<Term>,
   format?: {
     indented: boolean
@@ -105,7 +105,7 @@ export function freshHole(): Hole {
 }
 
 export function freshHoleTerm(): Term {
-  return {case: "neutral", applicant: freshHole(), arguments: List()}
+  return {case: "neutral", applicant: {case: "hole", hole: freshHole()}, arguments: List()}
 }
 
 
@@ -113,12 +113,14 @@ export function freshHoleTerm(): Term {
 // Context
 
 // debruijnlevel => [label, type, value?]
-export type Context = List<[Label, Term , Term | undefined]>
+export type Context = List<ContextItem>
+export type ContextItem = [Label, Term, Term | undefined]
 
 // Substitution
 
 // A => Term
-export type Substitution<A> = List<[A, Term]>;
+export type Substitution<A> = List<SubstitutionItem<A>>
+export type SubstitutionItem<A> = [A , Term]
 
 // Term Index
 
@@ -133,8 +135,16 @@ export type TermIxStep
   export function compareTermIx(ix1: TermIx, ix2: TermIx): boolean {
     if (ix1.size !== ix2.size) return false;
     for (let i = 0; i < ix1.size; i ++) {
-      if (ix1.get(i) !== ix2.get(i)) {
-        return false;
+      let ix1_i = ix1.get(i) as TermIxStep;
+      let ix2_i = ix2.get(i) as TermIxStep;
+      switch (ix1_i.case) {
+        case "application argument": 
+          if (!(ix2_i.case === "application argument" && ix1_i.iArg === ix2_i.iArg))
+            return false;
+          break;
+        default:
+          if (!(ix1_i.case === ix2_i.case))
+            return false;
       }
     }
     return true;
@@ -149,7 +159,11 @@ export function showTerm(a: Term, labels: List<Label> = List()): string {
     case "lambda": return `(λ ${a.label.value} : ${showTerm(a.domain, labels)} . ${showTerm(a.body, labels.push(a.label))})`;
     case "let": return `(let ${a.label.value} : ${showTerm(a.domain, labels)} = ${showTerm(a.argument, labels)} in ${showTerm(a.body, labels.push(a.label))})`;
     case "neutral": {
-      let f = typeof(a.applicant) === "number" ? (labels.get(a.applicant as number) as Label).value : "?";
+      var f;
+      switch (a.applicant.case) {
+        case "variable": f = (labels.get(a.applicant.debruijnlevel) as Label).value; break;
+        case "hole": f = "?"; break;
+      }
       if (a.arguments.size === 0) return f;
       else return `(${f} ${a.arguments.map(b => showTerm(b, labels)).reduce((a, b) => `${a} ${b}`)})`;
     }

@@ -1,9 +1,24 @@
 import { List } from "immutable";
 import React, { MouseEventHandler } from "react";
 import App from "./App";
-import { Environment } from "./shape/Environment";
-import { Label, Term, Hole, TermIx } from "./shape/Grammar";
-import { applyTransformation, placePi } from "./shape/Transformation";
+import { collectContext } from "./shape/Typing";
+import {
+  Label,
+  Term,
+  Context,
+  Hole,
+  TermIx,
+  compareTermIx,
+  showTerm,
+} from "./shape/Grammar";
+import {
+  applyTransformation,
+  placeLambda,
+  placeLet,
+  placeVariable,
+  placePi,
+  placeUniverse,
+} from "./shape/Transformation";
 
 export function renderApp(app: App): JSX.Element {
   return (
@@ -32,22 +47,32 @@ function renderPalette(app: App): JSX.Element {
     onClick: MouseEventHandler<HTMLDivElement>;
   }> = List([
     {
+      label: "universe",
+      onClick: (event) => applyTransformation(app, placeUniverse),
+    },
+    {
       label: "pi",
-      onClick: (event) => {
-        let envNew = applyTransformation(
-          app.appState.environment,
-          placePi
-        ) as Environment;
-        if (envNew !== undefined) {
-          console.log("transformation success");
-          app.appState.environment = envNew;
-          app.setState(app.appState);
-        } else {
-          console.log("transformation failure");
-        }
-      },
+      onClick: (event) => applyTransformation(app, placePi),
+    },
+    {
+      label: "lambda",
+      onClick: (event) => applyTransformation(app, placeLambda),
+    },
+    {
+      label: "let",
+      onClick: (event) => applyTransformation(app, placeLet),
     },
   ]);
+  let env = app.appState.environment;
+  let context: Context = collectContext(env.program, env.focus);
+  context.forEach((item, dbl) => {
+    options = options.push({
+      label: "neutral " + item[0].value,
+      onClick: (event) => {
+        applyTransformation(app, placeVariable(dbl));
+      },
+    });
+  });
   return (
     <div className="palette">
       {options.map((opt) => (
@@ -107,23 +132,28 @@ function renderProgram(app: App, program: Term): JSX.Element {
     i: number = 0,
     ix: TermIx = List()
   ): JSX.Element[] {
-    if (a.case !== "neutral") {
-      a.format = {
-        indented: true,
-        annotated: true,
-      };
-    }
+    // if (a.case !== "neutral") {
+    //   a.format = {
+    //     indented: true,
+    //     annotated: true,
+    //   };
+    // }
     switch (a.case) {
       case "universe": {
-        return [<span className="term universe">U</span>];
+        return [
+          <span className="term universe">
+            U<sub>{a.universelevel}</sub>
+          </span>,
+        ];
       }
       case "pi": {
         let iSub = a.format?.indented ? i + 1 : i;
         return (a.format?.indented ? [br, indent(i)] : [])
-          .concat([lparen, pi, renderLabel(a.label)])
+          .concat([lparen, pi, renderBinding(a.label)])
           .concat(
-            a.format?.annotated
-              ? [colon].concat(
+            a.format?.unannotated
+              ? []
+              : [colon].concat(
                   renderTerm(
                     a.domain,
                     labels,
@@ -131,13 +161,12 @@ function renderProgram(app: App, program: Term): JSX.Element {
                     ix.push({ case: "pi domain" })
                   )
                 )
-              : []
           )
           .concat(period)
           .concat(
             renderTerm(
               a.codomain,
-              labels.insert(0, a.label),
+              labels.push(a.label),
               iSub,
               ix.push({ case: "pi codomain" })
             )
@@ -147,10 +176,11 @@ function renderProgram(app: App, program: Term): JSX.Element {
       case "lambda": {
         let iSub = a.format?.indented ? i + 1 : i;
         return (a.format?.indented ? [br, indent(i)] : [])
-          .concat([lparen, lambda, renderLabel(a.label)])
+          .concat([lparen, lambda, renderBinding(a.label)])
           .concat(
-            a.format?.annotated
-              ? [colon].concat(
+            a.format?.unannotated
+              ? []
+              : [colon].concat(
                   renderTerm(
                     a.domain,
                     labels,
@@ -158,13 +188,12 @@ function renderProgram(app: App, program: Term): JSX.Element {
                     ix.push({ case: "lambda domain" })
                   )
                 )
-              : []
           )
           .concat([period])
           .concat(
             renderTerm(
               a.body,
-              labels.insert(0, a.label),
+              labels.push(a.label),
               iSub,
               ix.push({ case: "lambda body" })
             )
@@ -174,10 +203,11 @@ function renderProgram(app: App, program: Term): JSX.Element {
       case "let": {
         let iSub = a.format?.indented ? i + 1 : i;
         return (a.format?.indented ? [br, indent(i)] : [])
-          .concat([lparen, let_, renderLabel(a.label)])
+          .concat([lparen, let_, renderReference(a.label)])
           .concat(
-            a.format?.annotated
-              ? [colon].concat(
+            a.format?.unannotated
+              ? []
+              : [colon].concat(
                   renderTerm(
                     a.domain,
                     labels,
@@ -185,7 +215,6 @@ function renderProgram(app: App, program: Term): JSX.Element {
                     ix.push({ case: "let domain" })
                   )
                 )
-              : []
           )
           .concat(assignment)
           .concat(
@@ -200,7 +229,7 @@ function renderProgram(app: App, program: Term): JSX.Element {
           .concat(
             renderTerm(
               a.body,
-              labels.insert(0, a.label),
+              labels.push(a.label),
               iSub,
               ix.push({ case: "let body" })
             )
@@ -209,20 +238,23 @@ function renderProgram(app: App, program: Term): JSX.Element {
       }
       case "neutral": {
         let iSub = a.format?.indented ? i + 1 : i;
+        let f: JSX.Element;
+        switch (a.applicant.case) {
+          case "variable": {
+            f = renderReference(labels.get(a.applicant.debruijnlevel) as Label);
+            break;
+          }
+          case "hole": {
+            f = renderHole(a.applicant.hole, ix);
+            break;
+          }
+        }
         if (a.arguments.size === 0) {
-          return (a.format?.indented ? [br, indent(i)] : []).concat(
-            typeof a.applicant === "number"
-              ? [renderLabel(labels.get(a.applicant) as Label)]
-              : [renderHole(a.applicant, ix)]
-          );
+          return (a.format?.indented ? [br, indent(i)] : []).concat([f]);
         } else {
           return (a.format?.indented ? [br, indent(i)] : [])
             .concat(lparen)
-            .concat(
-              typeof a.applicant === "number"
-                ? [renderLabel(labels.get(a.applicant) as Label)]
-                : [renderHole(a.applicant, ix)]
-            )
+            .concat(f)
             .concat(
               a.arguments
                 .map((a, iArg) =>
@@ -247,16 +279,35 @@ function renderProgram(app: App, program: Term): JSX.Element {
       app.appState.environment = app.appState.environment.set("focus", ix);
       app.setState(app.appState);
     };
+    let classList = ["hole"];
+    if (compareTermIx(ix, app.appState.environment.focus))
+      classList.push("focussed");
     return (
-      <span className="hole" onClick={onClick}>
+      <span className={classList.join(" ")} onClick={onClick}>
         {question}
       </span>
     );
   }
 
-  function renderLabel(label: Label): JSX.Element {
-    //TODO: allow editting
-    return <span className="token label">{label.value}</span>;
+  function renderBinding(label: Label): JSX.Element {
+    let onChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+      label.value = event.target.value;
+      event.target.value = label.value;
+      event.target.style.width = label.value.length + "ch";
+      app.setState(app.appState);
+    };
+    return (
+      <input
+        className="token label binding"
+        onChange={onChange}
+        value={label.value}
+        width={label.value.length + "ch"}
+      ></input>
+    );
+  }
+
+  function renderReference(label: Label): JSX.Element {
+    return <span className="token label reference">{label.value}</span>;
   }
 
   return <span>{renderTerm(program)}</span>;

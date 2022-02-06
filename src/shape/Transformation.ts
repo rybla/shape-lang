@@ -1,16 +1,28 @@
 // A transformation is a function that inputs a Term and outputs a Term.
 
-import { Context, DeBruijnLevel, freshHoleTerm, Label, showTerm, Term, TermIx, TermIxStep } from "./Grammar";
+import { Context, ContextItem, DeBruijnLevel, freshHoleTerm, Label, showTerm, Term, TermIx, TermIxStep } from "./Grammar";
 import { Environment } from "./Environment";
 import { List } from "immutable";
-import { infer } from "./Typing";
+import { infer, inferParameters } from "./Typing";
+import App from "../App";
 
 type Transformation = (env: Environment, gamma: Context, alpha: Term, a: Term) => Term | undefined
 
-export function applyTransformation(env: Environment, trans: Transformation): Environment | undefined {
-  console.log("applyTransformation", showTerm(env.program), env.focus.toArray());
+export function applyTransformation(app: App, trans: Transformation) {
+  let envNew = tryTransformation(app.appState.environment, trans);
+  if (envNew) {
+    console.log("transformation success");
+    let appState = app.appState;
+    appState.environment = envNew;
+    app.setState(appState);
+  } else {
+    console.log("transformation failure");
+  }
+}
+
+export function tryTransformation(env: Environment, trans: Transformation): Environment | undefined {
+  console.log("tryTransformation", showTerm(env.program), env.focus.toArray());
   function go(ix: TermIx, gamma: Context, a: Term): Term | undefined {
-    console.log("applyTransformation.go", ix.toArray(), gamma.map(item => item[0].value).toArray(), showTerm(a));
     if (ix.size === 0 ) {
       return trans(env, gamma, infer(gamma, a), a);
     } else {
@@ -91,17 +103,27 @@ export function freshLabel(): Label {
   return ({value: "x"});
 }
 
+export const placeUniverse: Transformation = (env, gamma, alpha, a) => {
+  return {case: "universe", universelevel: 0};
+}
+
 export const placePi: Transformation = (env, gamma, alpha, a) => {
   return {case: "pi", label: freshLabel(), domain: freshHoleTerm(), codomain: freshHoleTerm()};
 }
 
-export function placeVar(dbl: DeBruijnLevel): Transformation {
+export const placeLambda: Transformation = (env, gamma, alpha, a) => {
+  return {case: "lambda", label: freshLabel(), domain: freshHoleTerm(), body: freshHoleTerm()};
+}
+
+export const placeLet: Transformation = (env, gamma, alpha, a) => {
+  return {case: "let", label: freshLabel(), domain: freshHoleTerm(), argument: freshHoleTerm(), body: freshHoleTerm()};
+}
+
+export function placeVariable(dbl: DeBruijnLevel): Transformation {
   return (env, gamma, alpha, a) => {
-    if (0 < dbl && dbl < gamma.size) {
-      return {case: "neutral", applicant: dbl, arguments: List()};
-    } else {
-      return undefined;
-    }
+    let beta = (gamma.get(dbl) as ContextItem)[1];
+    let params = inferParameters(beta);
+    return {case: "neutral", applicant: {case: "variable", debruijnlevel: dbl}, arguments: params.map(param => freshHoleTerm())}
   }
 }
 
@@ -110,59 +132,3 @@ export const placeHole: Transformation = (env, gamma, alpha, a) => {
   return freshHoleTerm();
 }
 
-// substitution
-
-// // a[ix => b]
-// export function substituteTermIx(a: Term, ix: TermIx, b: Term): Term {
-//   if (ix.size === 0) {
-//     return b;
-//   } else {
-//     let step = ix.last() as TermIxStep;
-//     switch (a.case) {
-//       case "pi": {
-//         switch (step.case) {
-//           case "pi domain": {
-//             return substituteTermIx(a.domain, ix, b);
-//           }
-//           case "pi codomain": {
-//             return substituteTermIx(a.codomain, ix.pop(), b);
-//           }
-//         }
-//         throw new Error("impossible case");
-//       }
-//       case "lambda": {
-//         switch (step.case) {
-//           case "lambda domain": {
-//             return substituteTermIx(a.domain, ix.pop(), b);
-//           }
-//           case "lambda body": {
-//             return substituteTermIx(a.body, ix.pop(), b);
-//           }
-//         }
-//         throw new Error("impossible case");
-//       }
-//       case "let": {
-//         switch (step.case) {
-//           case "let domain": {
-//             return substituteTermIx(a.domain, ix.pop(), b);
-//           }
-//           case "let argument": {
-//             return substituteTermIx(a.argument, ix.pop(), b);
-//           }
-//           case "let body": {
-//             return substituteTermIx(a.body, ix.pop(), b);
-//           }
-//         }
-//         throw new Error("impossible case");
-//       }
-//       case "neutral": {
-//         switch (step.case) {
-//           case "application argument": {
-//             return substituteTermIx(a.arguments.get(step.iArg) as Term, ix.pop(), b);
-//           }
-//         }
-//       }
-//     }
-//   }
-//   throw new Error("impossible case");
-// }

@@ -50,6 +50,9 @@ body {
 
 /* term */
 
+.universe {
+}
+
 /* .let-domain,
 .let-argument {
   vertical-align: top;
@@ -62,14 +65,31 @@ body {
   margin: 0.1em 0.1em;
 }
 
+.label {
+  font-style: italic;
+  color: blue;
+}
+
+.label.binding {
+  outline: none;
+  border: none;
+  font-size: 12pt;
+  /* text-decoration: underline; */
+  width: 1ch;
+}
+
 .hole {
   display: inline-block;
   margin: 0 0.1em;
-  box-shadow: 0 0 0 1px red;
+  box-shadow: 0 0 0 1px gray;
 }
 
 .hole.focussed {
-  box-shadow: 0 0 0 1px green;
+  box-shadow: 0 0 0 1px red;
+  cursor: pointer;
+}
+.hole.focussed > .token.punctuation.question-mark {
+  color: red;
 }
 
 .token.label {
@@ -111,7 +131,7 @@ body {
 .token.punctuation.question-mark {
   margin-top: 0;
   margin-bottom: 0;
-  color: red;
+  color: gray;
 }
 
 .token.punctuation.space {
