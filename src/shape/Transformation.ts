@@ -4,11 +4,11 @@ import { Context, ContextItem, DeBruijnLevel, freshHoleTerm, Label, showTerm, Te
 import { Environment } from "./Environment";
 import { List } from "immutable";
 import { infer, inferParameters } from "./Typing";
-import App from "../App";
+import App, { app } from "../App";
 
 type Transformation = (env: Environment, gamma: Context, alpha: Term, a: Term) => Term | undefined
 
-export function applyTransformation(app: App, trans: Transformation) {
+export function applyTransformation(trans: Transformation) {
   let envNew = tryTransformation(app.appState.environment, trans);
   if (envNew) {
     console.log("transformation success");
@@ -33,12 +33,12 @@ export function tryTransformation(env: Environment, trans: Transformation): Envi
           switch (step.case) {
             case "pi domain": {
               let domain = go(ix, gamma, a.domain);
-              if (domain) return {case: "pi", label: a.label, domain, codomain: a.codomain }
+              if (domain) return {case: "pi", label: a.label, domain, codomain: a.codomain , format: a.format}
               else return undefined;
             }
             case "pi codomain": {
               let codomain = go(ix, gamma.push([a.label, a.domain, undefined]), a.codomain);
-              if (codomain) return {case: "pi", label: a.label, domain: a.domain, codomain};
+              if (codomain) return {case: "pi", label: a.label, domain: a.domain, codomain, format: a.format};
               else return undefined;
             }
             default: return undefined;
@@ -48,12 +48,12 @@ export function tryTransformation(env: Environment, trans: Transformation): Envi
           switch (step.case) {
             case "lambda domain": {
               let domain = go(ix, gamma, a.domain);
-              if (domain) return {case: "lambda", label: a.label, domain, body: a.body};
+              if (domain) return {case: "lambda", label: a.label, domain, body: a.body, format: a.format};
               else return undefined;
             }
             case "lambda body": {
               let body = go(ix, gamma.push([a.label, a.domain, undefined]), a.body);
-              if (body) return {case: "lambda", label: a.label, domain: a.domain, body};
+              if (body) return {case: "lambda", label: a.label, domain: a.domain, body, format: a.format};
               else return undefined;
             }
             default: return undefined;
@@ -63,17 +63,17 @@ export function tryTransformation(env: Environment, trans: Transformation): Envi
           switch (step.case) {
             case "let domain": {
               let domain = go(ix, gamma, a.domain);
-              if (domain) return {case: "let", label: a.label, domain, argument: a.argument, body: a.body};
+              if (domain) return {case: "let", label: a.label, domain, argument: a.argument, body: a.body, format: a.format};
               return undefined;
             }
             case "let argument": {
               let argument = go(ix, gamma, a.argument);
-              if (argument) return {case: "let", label: a.label, domain: a.domain, argument, body: a.body};
+              if (argument) return {case: "let", label: a.label, domain: a.domain, argument, body: a.body, format: a.format};
               else return undefined;
             }
             case "let body": {
               let body = go(ix, gamma.push([a.label, a.domain, a.argument]), a.body);
-              if (body) return {case: "let", label: a.label, domain: a.domain, argument: a.argument, body};
+              if (body) return {case: "let", label: a.label, domain: a.domain, argument: a.argument, body, format: a.format};
               else return undefined;
             }
             default: return undefined;
@@ -83,7 +83,7 @@ export function tryTransformation(env: Environment, trans: Transformation): Envi
           switch (step.case) {
             case "application argument": {
               let argument = go(ix, gamma, a.arguments.get(step.iArg) as Term);
-              if (argument) return {case: "neutral", applicant: a.applicant, arguments: a.arguments.set(step.iArg, argument)};
+              if (argument) return {case: "neutral", applicant: a.applicant, arguments: a.arguments.set(step.iArg, argument), format: a.format};
               else return undefined;
             }
           }
@@ -95,8 +95,6 @@ export function tryTransformation(env: Environment, trans: Transformation): Envi
   if (programNew) return env.set("program", programNew);
 }
 
-
-
 // transformations
 
 export function freshLabel(): Label {
@@ -104,26 +102,26 @@ export function freshLabel(): Label {
 }
 
 export const placeUniverse: Transformation = (env, gamma, alpha, a) => {
-  return {case: "universe", universelevel: 0};
+  return {case: "universe", universelevel: 0, format: {}};
 }
 
 export const placePi: Transformation = (env, gamma, alpha, a) => {
-  return {case: "pi", label: freshLabel(), domain: freshHoleTerm(), codomain: freshHoleTerm()};
+  return {case: "pi", label: freshLabel(), domain: freshHoleTerm(), codomain: freshHoleTerm(), format: {}};
 }
 
 export const placeLambda: Transformation = (env, gamma, alpha, a) => {
-  return {case: "lambda", label: freshLabel(), domain: freshHoleTerm(), body: freshHoleTerm()};
+  return {case: "lambda", label: freshLabel(), domain: freshHoleTerm(), body: freshHoleTerm(), format: {}};
 }
 
 export const placeLet: Transformation = (env, gamma, alpha, a) => {
-  return {case: "let", label: freshLabel(), domain: freshHoleTerm(), argument: freshHoleTerm(), body: freshHoleTerm()};
+  return {case: "let", label: freshLabel(), domain: freshHoleTerm(), argument: freshHoleTerm(), body: freshHoleTerm(), format: {}};
 }
 
 export function placeVariable(dbl: DeBruijnLevel): Transformation {
   return (env, gamma, alpha, a) => {
     let beta = (gamma.get(dbl) as ContextItem)[1];
     let params = inferParameters(beta);
-    return {case: "neutral", applicant: {case: "variable", debruijnlevel: dbl}, arguments: params.map(param => freshHoleTerm())}
+    return {case: "neutral", applicant: {case: "variable", debruijnlevel: dbl}, arguments: params.map(param => freshHoleTerm()), format: {}}
   }
 }
 
@@ -132,3 +130,7 @@ export const placeHole: Transformation = (env, gamma, alpha, a) => {
   return freshHoleTerm();
 }
 
+export const toggleIndent: Transformation = (env, gamma, alpha, a) => {
+  a.format.indented = !a.format.indented;
+  return a;
+}

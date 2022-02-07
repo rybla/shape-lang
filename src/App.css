@@ -53,6 +53,10 @@ body {
 .universe {
 }
 
+.universe.focussed {
+  color: red;
+}
+
 /* .let-domain,
 .let-argument {
   vertical-align: top;
@@ -66,7 +70,6 @@ body {
 }
 
 .label {
-  font-style: italic;
   color: blue;
 }
 
@@ -82,11 +85,12 @@ body {
   display: inline-block;
   margin: 0 0.1em;
   box-shadow: 0 0 0 1px gray;
+  border-radius: 1em;
+  cursor: pointer;
 }
 
 .hole.focussed {
   box-shadow: 0 0 0 1px red;
-  cursor: pointer;
 }
 .hole.focussed > .token.punctuation.question-mark {
   color: red;
@@ -115,11 +119,20 @@ body {
 
 .token.punctuation.pi {
 }
+.token.punctuation.pi.focussed {
+  color: red;
+}
 
 .token.punctuation.lambda {
 }
+.token.punctuation.lambda.focussed {
+  color: red;
+}
 
 .token.punctuation.let {
+}
+.token.punctuation.let.focussed {
+  color: red;
 }
 
 .token.punctuation.in {
@@ -135,5 +148,5 @@ body {
 }
 
 .token.punctuation.space {
-  width: 0.6em;
+  width: 0.2em;
 }

@@ -17,8 +17,8 @@ export type Term = TermUniverse | TermPi | TermLambda | TermLet | TermNeutral
 export type TermUniverse = {
   case: "universe",
   universelevel: UniverseLevel;
-  format?: {
-    indented: boolean
+  format: {
+    indented?: boolean
   }
 }
 
@@ -31,9 +31,9 @@ export type TermPi = {
   label: Label,
   domain: Term,
   codomain: Term,
-  format?: {
-    indented: boolean,
-    unannotated: boolean
+  format: {
+    indented?: boolean,
+    unannotated?: boolean
   }
 }
 
@@ -44,9 +44,9 @@ export type TermLambda = {
   label: Label,
   domain: Term,
   body: Term,
-  format?: {
-    indented: boolean,
-    unannotated: boolean
+  format: {
+    indented?: boolean,
+    unannotated?: boolean
   }
 }
 
@@ -58,9 +58,9 @@ export type TermLet = {
   domain: Term,
   argument: Term,
   body: Term,
-  format?: {
-    indented: boolean,
-    unannotated: boolean
+  format: {
+    indented?: boolean,
+    unannotated?: boolean
   }
 }
 
@@ -70,8 +70,8 @@ export type TermNeutral = {
   case: "neutral",
   applicant: {case: "variable", debruijnlevel: DeBruijnLevel} | {case: "hole", hole: Hole},
   arguments: List<Term>,
-  format?: {
-    indented: boolean
+  format: {
+    indented?: boolean
   }
 }
 
@@ -86,8 +86,8 @@ export type Hole = {
   holesymbol: HoleSymbol,
   weakening: DeBruijnLevel,
   substitution: Substitution<DeBruijnLevel>
-  format?: {
-    indented: boolean
+  format: {
+    indented?: boolean
   }
 }
 
@@ -95,8 +95,8 @@ export type HoleSymbol = Symbol
 
 export type HoleId = number;
 
-export function makeHole(holesymbol: HoleSymbol, weakening: DeBruijnLevel = 0, substitution: Substitution<DeBruijnLevel> = List(), format?: {indented: false}): Hole {
-  return {case: "hole", holesymbol, weakening, substitution, format};
+export function makeHole(holesymbol: HoleSymbol, weakening: DeBruijnLevel = 0, substitution: Substitution<DeBruijnLevel> = List()): Hole {
+  return {case: "hole", holesymbol, weakening, substitution, format: {}};
 }
 
 export function freshHole(): Hole {
@@ -105,7 +105,7 @@ export function freshHole(): Hole {
 }
 
 export function freshHoleTerm(): Term {
-  return {case: "neutral", applicant: {case: "hole", hole: freshHole()}, arguments: List()}
+  return {case: "neutral", applicant: {case: "hole", hole: freshHole()}, arguments: List(), format: {}}
 }
 
 

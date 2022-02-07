@@ -1,6 +1,6 @@
 import { List } from "immutable";
-import React, { MouseEventHandler } from "react";
-import App from "./App";
+import React, { CSSProperties, MouseEventHandler } from "react";
+import App, { app } from "./App";
 import { collectContext } from "./shape/Typing";
 import {
   Label,
@@ -9,7 +9,6 @@ import {
   Hole,
   TermIx,
   compareTermIx,
-  showTerm,
 } from "./shape/Grammar";
 import {
   applyTransformation,
@@ -18,58 +17,63 @@ import {
   placeVariable,
   placePi,
   placeUniverse,
+  placeHole,
+  toggleIndent,
 } from "./shape/Transformation";
+import { Environment } from "./shape/Environment";
 
-export function renderApp(app: App): JSX.Element {
+export function renderApp(): JSX.Element {
+  // onKeyPress={(event) => console.log("hello world")}
   return (
     <div className="App">
-      {renderWorkspace(app)}
+      {renderWorkspace()}
       <div className="sidebar">
-        {renderPalette(app)}
-        {renderConsole(app)}
-        {renderCommandLine(app)}
+        {renderPalette()}
+        {renderConsole()}
+        {renderCommandLine()}
       </div>
     </div>
   );
 }
 
-function renderWorkspace(app: App): JSX.Element {
+function renderWorkspace(): JSX.Element {
   return (
     <div className="workspace">
-      {renderProgram(app, app.appState.environment.program)}
+      {renderProgram(app.appState.environment.program)}
     </div>
   );
 }
 
-function renderPalette(app: App): JSX.Element {
+function renderPalette(): JSX.Element {
   let options: List<{
     label: string;
     onClick: MouseEventHandler<HTMLDivElement>;
   }> = List([
     {
       label: "universe",
-      onClick: (event) => applyTransformation(app, placeUniverse),
+      onClick: (event) => applyTransformation(placeUniverse),
     },
     {
       label: "pi",
-      onClick: (event) => applyTransformation(app, placePi),
+      onClick: (event) => applyTransformation(placePi),
     },
     {
       label: "lambda",
-      onClick: (event) => applyTransformation(app, placeLambda),
+      onClick: (event) => applyTransformation(placeLambda),
     },
     {
       label: "let",
-      onClick: (event) => applyTransformation(app, placeLet),
+      onClick: (event) => applyTransformation(placeLet),
     },
   ]);
   let env = app.appState.environment;
-  let context: Context = collectContext(env.program, env.focus);
+  let context: Context = collectContext(env.program, env.focus)[0];
   context.forEach((item, dbl) => {
+    if (item[0].value === "_" || item[0].value.length === 0) return;
     options = options.push({
       label: "neutral " + item[0].value,
       onClick: (event) => {
-        applyTransformation(app, placeVariable(dbl));
+        applyTransformation(placeVariable(dbl));
       },
     });
   });
@@ -84,7 +88,7 @@ function renderPalette(app: App): JSX.Element {
   );
 }
 
-function renderConsole(app: App): JSX.Element {
+function renderConsole(): JSX.Element {
   return (
     <div className="console">
       {}
@@ -93,7 +97,7 @@ function renderConsole(app: App): JSX.Element {
   );
 }
 
-function renderCommandLine(app: App): JSX.Element {
+function renderCommandLine(): JSX.Element {
   return (
     <div className="commandline">
       {}
@@ -102,7 +106,7 @@ function renderCommandLine(app: App): JSX.Element {
   );
 }
 
-function renderProgram(app: App, program: Term): JSX.Element {
+function renderProgram(program: Term): JSX.Element {
   // punctuation
   const br = <br></br>;
   const period = <span className="token punctuation period">.</span>;
@@ -126,12 +130,58 @@ function renderProgram(app: App, program: Term): JSX.Element {
     );
   }
 
+  let parenCount = 0;
+
   function renderTerm(
     a: Term,
     labels: List<Label> = List(),
     i: number = 0,
     ix: TermIx = List()
   ): JSX.Element[] {
+    let focussed: boolean = compareTermIx(ix, app.appState.environment.focus);
+    let focussedClass: string = focussed ? ` focussed` : "";
+
+    function makeParens(): [JSX.Element, JSX.Element] {
+      let parenId = parenCount;
+      let style: CSSProperties = focussed ? { color: "red" } : {};
+      const onMouseEnter: MouseEventHandler<HTMLSpanElement> = (event) => {
+        let el = document.getElementById("lparen" + parenId);
+        let er = document.getElementById("rparen" + parenId);
+        el?.setAttribute("style", "color: orange");
+        er?.setAttribute("style", "color: orange");
+      };
+      const onMouseLeave: MouseEventHandler<HTMLSpanElement> = (event) => {
+        let el = document.getElementById("lparen" + parenId);
+        let er = document.getElementById("rparen" + parenId);
+        el?.setAttribute("style", "");
+        er?.setAttribute("style", "");
+      };
+      let lpar = (
+        <span
+          id={"lparen" + parenId}
+          className="token punctuation left-paren"
+          style={style}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+        >
+          (
+        </span>
+      );
+      let rpar = (
+        <span
+          id={"rparen" + parenId}
+          className="token punctuation reft-paren"
+          style={style}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+        >
+          )
+        </span>
+      );
+      parenCount++;
+      return [lpar, rpar];
+    }
+
     // if (a.case !== "neutral") {
     //   a.format = {
     //     indented: true,
@@ -141,15 +191,20 @@ function renderProgram(app: App, program: Term): JSX.Element {
     switch (a.case) {
       case "universe": {
         return [
-          <span className="term universe">
+          <span className={"term universe" + focussedClass}>
             U<sub>{a.universelevel}</sub>
           </span>,
         ];
       }
       case "pi": {
         let iSub = a.format?.indented ? i + 1 : i;
+        let [lpar, rpar] = makeParens();
         return (a.format?.indented ? [br, indent(i)] : [])
-          .concat([lparen, pi, renderBinding(a.label)])
+          .concat([
+            lpar,
+            <span className={"token punctuation pi" + focussedClass}>Π</span>,
+            renderBinding(a.label),
+          ])
           .concat(
             a.format?.unannotated
               ? []
@@ -171,12 +226,19 @@ function renderProgram(app: App, program: Term): JSX.Element {
               ix.push({ case: "pi codomain" })
             )
           )
-          .concat(rparen);
+          .concat(rpar);
       }
       case "lambda": {
         let iSub = a.format?.indented ? i + 1 : i;
+        let [lpar, rpar] = makeParens();
         return (a.format?.indented ? [br, indent(i)] : [])
-          .concat([lparen, lambda, renderBinding(a.label)])
+          .concat([
+            lpar,
+            <span className={"token punctuation lambda" + focussedClass}>
+              λ
+            </span>,
+            renderBinding(a.label),
+          ])
           .concat(
             a.format?.unannotated
               ? []
@@ -198,12 +260,19 @@ function renderProgram(app: App, program: Term): JSX.Element {
               ix.push({ case: "lambda body" })
             )
           )
-          .concat([rparen]);
+          .concat([rpar]);
       }
       case "let": {
         let iSub = a.format?.indented ? i + 1 : i;
+        let [lpar, rpar] = makeParens();
         return (a.format?.indented ? [br, indent(i)] : [])
-          .concat([lparen, let_, renderReference(a.label)])
+          .concat([
+            lpar,
+            <span className={"token punctuation let" + focussedClass}>
+              let
+            </span>,
+            renderReference(a.label),
+          ])
           .concat(
             a.format?.unannotated
               ? []
@@ -234,10 +303,11 @@ function renderProgram(app: App, program: Term): JSX.Element {
               ix.push({ case: "let body" })
             )
           )
-          .concat(rparen);
+          .concat(rpar);
       }
       case "neutral": {
         let iSub = a.format?.indented ? i + 1 : i;
+        let [lpar, rpar] = makeParens();
         let f: JSX.Element;
         switch (a.applicant.case) {
           case "variable": {
@@ -253,8 +323,8 @@ function renderProgram(app: App, program: Term): JSX.Element {
           return (a.format?.indented ? [br, indent(i)] : []).concat([f]);
         } else {
           return (a.format?.indented ? [br, indent(i)] : [])
-            .concat(lparen)
-            .concat(f)
+            .concat(lpar)
+            .concat([f, space])
             .concat(
               a.arguments
                 .map((a, iArg) =>
@@ -268,7 +338,7 @@ function renderProgram(app: App, program: Term): JSX.Element {
                 .toArray()
                 .reduce((a, b) => a.concat([space], b))
             )
-            .concat(rparen);
+            .concat(rpar);
         }
       }
     }
@@ -312,3 +382,117 @@ function renderProgram(app: App, program: Term): JSX.Element {
 
   return <span>{renderTerm(program)}</span>;
 }
+
+type Direction = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
+export const ArrowDirections: string[] = [
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+];
+export function moveTermIx(
+  env: Environment,
+  ix: TermIx,
+  d: Direction
+): TermIx | undefined {
+  switch (d) {
+    case "ArrowUp":
+      return ix.pop();
+    case "ArrowDown": {
+      let a = collectContext(env.program, ix)[1];
+      switch (a.case) {
+        case "pi":
+          return ix.push({ case: "pi domain" });
+        case "lambda":
+          return ix.push({ case: "lambda domain" });
+        case "let":
+          return ix.push({ case: "let domain" });
+        default:
+          return undefined;
+      }
+    }
+    case "ArrowLeft": {
+      let ixParent = ix.pop();
+      let ixStep = ix.last();
+      if (ixParent && ixStep) {
+        switch (ixStep.case) {
+          case "pi codomain":
+            return ixParent.push({ case: "pi domain" });
+          case "lambda body":
+            return ixParent.push({ case: "lambda domain" });
+          case "let argument":
+            return ixParent.push({ case: "let domain" });
+          case "let body":
+            return ixParent.push({ case: "let argument" });
+          default:
+            return undefined;
+        }
+      } else return undefined;
+    }
+    case "ArrowRight": {
+      let ixParent = ix.pop();
+      let ixStep = ix.last();
+      if (ixParent && ixStep) {
+        switch (ixStep.case) {
+          case "pi domain":
+            return ixParent.push({ case: "pi codomain" });
+          case "lambda domain":
+            return ixParent.push({ case: "lambda body" });
+          case "let domain":
+            return ixParent.push({ case: "let argument" });
+          case "let argument":
+            return ixParent.push({ case: "let body" });
+          default:
+            return undefined;
+        }
+      } else return undefined;
+    }
+  }
+}
+
+window.addEventListener("keydown", (event) => {
+  let focus: TermIx = app.appState.environment.focus;
+
+  // arrow movement
+  if (ArrowDirections.includes(event.key)) {
+    console.log(event.key, focus.toArray());
+    let focusNew = moveTermIx(
+      app.appState.environment,
+      focus,
+      event.key as Direction
+    );
+    if (focusNew) {
+      app.appState.environment = app.appState.environment.set(
+        "focus",
+        focusNew
+      );
+      app.setState(app.appState);
+    }
+  }
+  console.log(event.key);
+  switch (event.key) {
+    case "u":
+      applyTransformation(placeUniverse);
+      break;
+    case "p":
+      applyTransformation(placePi);
+      break;
+    case "l":
+      applyTransformation(placeLambda);
+      break;
+    case "=":
+      applyTransformation(placeLet);
+      break;
+    case "d":
+      applyTransformation(placeHole);
+      break;
+    case "Backspace":
+      applyTransformation(placeHole);
+      break;
+    case "Enter":
+      applyTransformation(toggleIndent);
+      break;
+    default:
+      break;
+  }
+});
