@@ -73,12 +73,12 @@ body {
   color: blue;
 }
 
-.label.binding {
-  outline: none;
-  border: none;
-  font-size: 12pt;
-  /* text-decoration: underline; */
-  width: 1ch;
+.label.binding.focussed {
+  color: red;
+}
+
+.label.reference.focussed {
+  color: red;
 }
 
 .hole {
@@ -148,5 +148,7 @@ body {
 }
 
 .token.punctuation.space {
-  width: 0.2em;
+  /* margin-left: 0;
+  margin-right: 0; */
+  width: 0;
 }

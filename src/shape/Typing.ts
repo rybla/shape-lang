@@ -72,6 +72,7 @@ export function collectContext(a: Term, ix: TermIx, gamma: Context = List()): [C
         a = a as TermNeutral;
         return collectContext(a.arguments.get(step.iArg) as Term, ix, gamma);
       }
+      default: throw Error();
     }
   } else {
     return [gamma, a];

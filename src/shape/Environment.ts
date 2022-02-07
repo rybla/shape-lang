@@ -1,17 +1,17 @@
 import { List, Record } from "immutable";
-import { freshHoleTerm, Term, TermIx } from "./Grammar";
+import { freshHoleTerm, Label, Term, TermIx } from "./Grammar";
 
 /*
 The environment contains all the global, mutable information necessary for typechecking and transformation.
 */
 
+
+
 type EnvironmentProps = {
   program: Term,
-  focus: TermIx
 }
 
 export const defaultEnvironmentProps: EnvironmentProps = {
-  focus: List(),
   program: freshHoleTerm()
   // program: {
   //   case: "let",

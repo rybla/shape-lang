@@ -104,11 +104,9 @@ export function freshHole(): Hole {
   return makeHole(holesymbol);
 }
 
-export function freshHoleTerm(): Term {
-  return {case: "neutral", applicant: {case: "hole", hole: freshHole()}, arguments: List(), format: {}}
+export function freshHoleTerm(format?: {}): Term {
+  return {case: "neutral", applicant: {case: "hole", hole: freshHole()}, arguments: List(), format: format ? format : {}}
 }
-
-
 
 // Context
 
