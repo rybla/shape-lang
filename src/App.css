@@ -7,6 +7,28 @@ body {
   padding: 10px;
 }
 
+/* help */
+
+#help {
+  font-size: 8pt;
+}
+
+#help-title {
+  cursor: pointer;
+}
+
+#controls {
+}
+
+#controls > table {
+  border-collapse: collapse;
+}
+
+#controls td {
+  border: 1px solid black;
+  padding: 0.4em 0.4em;
+}
+
 /* workspace */
 
 .workspace {

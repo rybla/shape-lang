@@ -23,12 +23,15 @@ import {
   enterBinding,
 } from "./shape/Transformation";
 import { Environment } from "./shape/Environment";
+import { help } from "./Help";
 
 export function renderApp(): JSX.Element {
   // onKeyPress={(event) => console.log("hello world")}
   return (
     <div className="App">
       {renderWorkspace()}
+      <br></br>
+      {help}
       <div className="sidebar">
         {renderPalette()}
         {renderConsole()}
@@ -191,11 +194,11 @@ function renderProgram(program: Term): JSX.Element {
 
     switch (a.case) {
       case "universe": {
-        return [
+        return (a.format?.indented ? [br, indent(i)] : []).concat([
           <span className={"term universe" + focussedClass}>
             U<sub>{a.universelevel}</sub>
           </span>,
-        ];
+        ]);
       }
       case "pi": {
         let [lpar, rpar] = makeParens();
@@ -389,82 +392,137 @@ export const ArrowDirections: string[] = [
   "ArrowLeft",
   "ArrowRight",
 ];
-export function moveTermIx(
-  env: Environment,
-  ix: TermIx,
-  d: Direction
-): TermIx | undefined {
+
+export function moveTermIx(ix: TermIx, d: Direction): TermIx | undefined {
   switch (d) {
-    case "ArrowUp":
-      return ix.pop();
+    case "ArrowUp": {
+      if (ix.size > 0) return ix.pop();
+      else return undefined;
+    }
     case "ArrowDown": {
-      let a = collectContext(env.program, ix)[1];
-      switch (a.case) {
-        case "pi":
-          return ix.push({ case: "pi domain" });
-        case "lambda":
-          return ix.push({ case: "lambda domain" });
-        case "let":
-          return ix.push({ case: "let domain" });
-        case "neutral":
-          if (a.arguments.size > 0)
-            return ix.push({ case: "application argument", iArg: 0 });
-          else return undefined;
-        default:
-          return undefined;
-      }
+      return moveTermIxDown(ix);
     }
     case "ArrowLeft": {
       let ixParent = ix.pop();
       let ixStep = ix.last();
-      if (ixParent && ixStep) {
+      if (ixStep) {
         switch (ixStep.case) {
-          case "pi codomain":
+          // pi
+          case "pi domain": {
+            return ixParent;
+          }
+          case "pi codomain": {
             return ixParent.push({ case: "pi domain" });
-          case "lambda body":
+          }
+          // lambda
+          case "lambda domain": {
+            return ixParent;
+          }
+          case "lambda body": {
             return ixParent.push({ case: "lambda domain" });
-          case "let argument":
+          }
+          // let
+          case "let domain": {
+            return ixParent;
+          }
+          case "let argument": {
             return ixParent.push({ case: "let domain" });
-          case "let body":
+          }
+          case "let body": {
             return ixParent.push({ case: "let argument" });
-          case "application argument":
-            return ix.push({
-              case: "application argument",
-              iArg: Math.max(0, ixStep.iArg - 1),
-            });
-          default:
-            return undefined;
+          }
+          // application
+          case "application argument": {
+            if (ixStep.iArg > 0) {
+              return ix.push({
+                case: "application argument",
+                iArg: Math.max(0, ixStep.iArg - 1),
+              });
+            } else {
+              return ixParent;
+            }
+          }
         }
-      } else return undefined;
+      }
+      return undefined;
     }
     case "ArrowRight": {
-      let ixParent = ix.pop();
-      let ixStep = ix.last();
-      let a = collectContext(env.program, ix)[1];
-      if (ixParent && ixStep) {
-        switch (ixStep.case) {
-          case "pi domain":
-            return ixParent.push({ case: "pi codomain" });
-          case "lambda domain":
-            return ixParent.push({ case: "lambda body" });
-          case "let domain":
-            return ixParent.push({ case: "let argument" });
-          case "let argument":
-            return ixParent.push({ case: "let body" });
-          // case "application argument":
-          //   return ix.push({
-          //     case: "application argument",
-          //     iArg: Math.min(
-          //       (a as TermNeutral).arguments.size - 1,
-          //       ixParent.iArg + 1
-          //     ),
-          //   });
-          default:
-            return undefined;
+      let a = collectContext(app.appState.environment.program, ix)[1];
+      switch (a.case) {
+        case "universe": {
+          return moveTermIxForceRight(ix);
         }
-      } else return undefined;
+        case "pi": {
+          return moveTermIx(ix, "ArrowDown");
+        }
+        case "lambda": {
+          return moveTermIx(ix, "ArrowDown");
+        }
+        case "let": {
+          return moveTermIx(ix, "ArrowDown");
+        }
+        case "neutral": {
+          if (a.arguments.size > 0)
+            return ix.push({ case: "application argument", iArg: 0 });
+          else if (ix.size > 0) return moveTermIxForceRight(ix);
+          else return undefined;
+        }
+      }
     }
   }
+}
+
+function moveTermIxForceRight(ix: TermIx): TermIx | undefined {
+  let ixStep = ix.last();
+  if (ixStep) {
+    switch (ixStep.case) {
+      case "pi domain": {
+        return ix.pop().push({ case: "pi codomain" });
+      }
+      case "pi codomain": {
+        return moveTermIxForceRight(ix.pop());
+      }
+      case "lambda domain": {
+        return ix.pop().push({ case: "lambda body" });
+      }
+      case "lambda body": {
+        return moveTermIxForceRight(ix.pop());
+      }
+      case "let domain": {
+        return ix.pop().push({ case: "let argument" });
+      }
+      case "let body": {
+        return moveTermIxForceRight(ix.pop());
+      }
+    }
+  } else return undefined;
+}
+
+function moveTermIxDown(ix: TermIx): TermIx | undefined {
+  let a = collectContext(app.appState.environment.program, ix)[1];
+  switch (a.case) {
+    case "pi": {
+      return ix.push({ case: "pi domain" });
+    }
+    case "lambda": {
+      return ix.push({ case: "lambda domain" });
+    }
+    case "let": {
+      return ix.push({ case: "let domain" });
+    }
+    case "neutral": {
+      if (a.arguments.size > 0)
+        return ix.push({ case: "application argument", iArg: 0 });
+      else return undefined;
+    }
+  }
+  return undefined;
+}
+
+function moveTermIxDownmost(ix: TermIx): TermIx {
+  let ixDown = moveTermIxDown(ix);
+  if (ixDown) return moveTermIxDownmost(ixDown);
+  else return ix;
 }
 
 window.addEventListener("keydown", (event) => {
@@ -475,11 +533,7 @@ window.addEventListener("keydown", (event) => {
   // arrow movement
   if (ArrowDirections.includes(event.key)) {
     console.log(event.key, focus.toArray());
-    let focusNew = moveTermIx(
-      app.appState.environment,
-      focus,
-      event.key as Direction
-    );
+    let focusNew = moveTermIx(focus, event.key as Direction);
     if (focusNew) {
       app.appState.mode = {
         case: "term",
@@ -487,9 +541,7 @@ window.addEventListener("keydown", (event) => {
       };
       app.setState(app.appState);
     }
-  }
-
-  if (app.appState.mode.case === "label") {
+  } else if (app.appState.mode.case === "label") {
     let label = app.appState.mode.label;
     switch (event.key) {
       case "Backspace":
@@ -508,21 +560,13 @@ window.addEventListener("keydown", (event) => {
           case: "term",
           focus: app.appState.mode.focus,
         };
-        let focusNew1 = moveTermIx(
-          app.appState.environment,
-          focus,
-          "ArrowDown"
-        );
+        let focusNew1 = moveTermIx(focus, "ArrowDown");
         if (focusNew1) {
           app.appState.mode = {
             case: "term",
             focus: focusNew1,
           };
-          let focusNew2 = moveTermIx(
-            app.appState.environment,
-            focus,
-            "ArrowRight"
-          );
+          let focusNew2 = moveTermIx(focus, "ArrowRight");
           if (focusNew2) {
             app.appState.mode = {
               case: "term",
@@ -534,14 +578,14 @@ window.addEventListener("keydown", (event) => {
         break;
       default: {
         console.log(event.key);
-        if (/^[a-z0-9]$/i.test(event.key)) {
+        if (!["Meta", "Shift", "Alt"].includes(event.key)) {
           label.value = label.value + event.key;
           app.setState(app.appState);
         }
         break;
       }
     }
-  } else {
+  } else if (app.appState.mode.case === "term") {
     switch (event.key) {
       case "u":
         applyTransformation(placeUniverse);
@@ -571,7 +615,6 @@ window.addEventListener("keydown", (event) => {
         break;
       case "Tab":
         let focusNew = moveTermIx(
-          app.appState.environment,
           focus,
           event.shiftKey ? "ArrowLeft" : "ArrowRight"
         );

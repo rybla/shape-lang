@@ -6,7 +6,7 @@ import { List } from "immutable";
 import { infer, inferParameters } from "./Typing";
 import App, { app } from "../App";
 
-type Transformation = (env: Environment, gamma: Context, alpha: Term, a: Term) => Term | undefined
+type Transformation = (gamma: Context, alpha: Term, a: Term) => Term | undefined
 
 export function applyTransformation(trans: Transformation) {
   let envNew = tryTransformation(app.appState.environment, trans);
@@ -23,7 +23,7 @@ export function tryTransformation(env: Environment, trans: Transformation): Envi
   console.log("tryTransformation", showTerm(env.program), app.appState.mode.focus.toArray());
   function go(ix: TermIx, gamma: Context, a: Term): Term | undefined {
     if (ix.size === 0 ) {
-      return trans(env, gamma, infer(gamma, a), a);
+      return trans(gamma, infer(gamma, a), a);
     } else {
       let step = ix.first() as TermIxStep;
       ix = ix.shift();
@@ -100,24 +100,30 @@ export function freshLabel(): Label {
   return ({value: ""});
 }
 
-export const placeUniverse: Transformation = (env, gamma, alpha, a) => {
+export const placeUniverse: Transformation = (gamma, alpha, a) => {
   return {case: "universe", universelevel: 0, format: a.format};
 }
 
-export const placePi: Transformation = (env, gamma, alpha, a) => {
-  return {case: "pi", label: freshLabel(), domain: freshHoleTerm(), codomain: freshHoleTerm(), format: a.format};
+export const placePi: Transformation = (gamma, alpha, a) => {
+  let label =  freshLabel();
+  app.appState.mode = {case: "label", label, focus: app.appState.mode.focus};
+  return {case: "pi", label, domain: freshHoleTerm(), codomain: freshHoleTerm(), format: a.format};
 }
 
-export const placeLambda: Transformation = (env, gamma, alpha, a) => {
-  return {case: "lambda", label: freshLabel(), domain: freshHoleTerm(), body: freshHoleTerm(), format: a.format};
+export const placeLambda: Transformation = (gamma, alpha, a) => {
+  let label =  freshLabel();
+  app.appState.mode = {case: "label", label, focus: app.appState.mode.focus};
+  return {case: "lambda", label, domain: freshHoleTerm(), body: freshHoleTerm(), format: a.format};
 }
 
-export const placeLet: Transformation = (env, gamma, alpha, a) => {
-  return {case: "let", label: freshLabel(), domain: freshHoleTerm(), argument: freshHoleTerm(), body: freshHoleTerm(), format: a.format};
+export const placeLet: Transformation = (gamma, alpha, a) => {
+  let label =  freshLabel();
+  app.appState.mode = {case: "label", label, focus: app.appState.mode.focus};
+  return {case: "let", label, domain: freshHoleTerm(), argument: freshHoleTerm(), body: freshHoleTerm(), format: a.format};
 }
 
 export function placeVariable(dbl: DeBruijnLevel): Transformation {
-  return (env, gamma, alpha, a) => {
+  return (gamma, alpha, a) => {
     let beta = (gamma.get(dbl) as ContextItem)[1];
     let params = inferParameters(beta);
     return {case: "neutral", applicant: {case: "variable", debruijnlevel: dbl}, arguments: params.map(param => freshHoleTerm()), format: a.format}
@@ -125,16 +131,16 @@ export function placeVariable(dbl: DeBruijnLevel): Transformation {
 }
 
 // i.e. dig
-export const placeHole: Transformation = (env, gamma, alpha, a) => {
+export const placeHole: Transformation = (gamma, alpha, a) => {
   return freshHoleTerm(a.format);
 }
 
-export const toggleIndent: Transformation = (env, gamma, alpha, a) => {
+export const toggleIndent: Transformation = (gamma, alpha, a) => {
   a.format.indented = !a.format.indented;
   return a;
 }
 
-export const enterBinding: Transformation = (env, gamma, alpha, a) => {
+export const enterBinding: Transformation = (gamma, alpha, a) => {
   if (a.case === "pi" || a.case === "lambda" || a.case === "let") {
     console.log("here");
     app.appState.mode = {
