@@ -1,0 +1,180 @@
+The goal of this file is to list transformations that we want the editor to be able to do.
+We should develop the theory behind it with these in mind.
+Or determine that that there is no nice theory behind it.
+
+No need to list obvious ones like "Fill a hole" or "Dig" or "Use a variable"
+
+------------------------------ Add an argument to an existing function
+- Definitely want this one
+
+FROM
+
+let f x y = ...
+in ... (f a b) ...
+
+TO
+
+let f x z y = ...
+in ... (f a ? b)
+
+
+------------------------ Add, remove, or swap an argument to an application which has a hole on the left
+- Probably want this
+FROM
+? a b c
+TO
+? a b d c
+OR
+? a c
+
+Example of why you would want this:
+START
+let f : A -> C
+let g : A -> B -> C
+in f a
+NEXT dig f
+let f : A -> C
+let g : A -> B -> C
+in ? a
+NEXT fill g in hole
+let f : A -> C
+let g : A -> B -> C
+in {g} a
+NEXT add b to argument list
+let f : A -> C
+let g : A -> B -> C
+in {g} a b
+FINALLY now that the type matches fill hole with contents
+let f : A -> C
+let g : A -> B -> C
+in g a b
+
+On the other hand, the reason for not wanting this transformation is that having arguments
+doesn't make sense without knowing what function that the are arguments for. So maybe
+instead of applications, we just have functions which take arguments as holes as a construct.
+C syntax makes this view of applications more intuitive:
+(? a b) looks like it makes sense but ?(a,b) not so much.
+
+
+--------------------------------------------------------------------
+A transformation that we probably DONT want:
+-------------- Modify one fucntion to accomadate another
+
+FROM
+
+f : (A -> B) -> C 
+f = ?
+g : A -> B
+... (f g) ...
+
+NEXT - user digs "A" in f's signature
+
+f : (? -> B) -> C
+f = ?
+g : ? -> B
+... (f g) ...
+
+This would be counterintuitive to a user as it creates an unusual nonlocal change.
+
+Instead,
+--------------- Change an argument
+
+FROM
+
+f : (A -> B) -> C 
+f = ?
+g : A -> B
+... (f g) ...
+
+NEXT - user digs "A" in f's signature
+
+f : (? -> B) -> C
+f = ?
+g : A -> B
+... (f {g}) ...
+
+If an argument no longer fits, put it in a hole so that the user remembers that 
+it was there, but the code still typechecks.
+
+-------------------------------------
+A transformation that I'm not sure if we want:
+-------------- Modify an in place lambda as a result of an argument change
+
+FROM
+
+let f : (A -> C) -> D = ?
+in f (lam a . stuff)
+
+TO - user adds argument to argument of f
+
+let f : (A -> B -> C) -> D = ?
+in f (lam a b . stuff)
+
+The alternative is to use the previous rule instead, so we would get
+the lambda put into a hole.
+
+let f : (A -> B -> C) -> D = ?
+in f {lam a . stuff}
+
+NEXT - user adds argument to lambda
+
+let f : (A -> B -> C) -> D = ?
+in f {lam a b . stuff}
+
+FINALLY - user fills hole
+
+let f : (A -> B -> C) -> D = ?
+in f (lam a b . stuff)
+
+
+Argument against: unexpected nonlocal change
+
+Argument for: lambdas on the r.h.s. of an application are anonymous, and only exist as an argument
+to that particular function. Therefore, it makes sense that they would follow whichever changes that
+the function undergoes. Contrast this with the previous transformation, in which a named function
+which may be used elsewhere was the argument.
+
+--------------------------------------------------------------------------------------------------
+-------------------- Lambdas on the left:
+-------------------- Add an argument to a let-bound function, except that
+-------------------- It actually is a lambda and an application and not a let
+
+START
+
+(lam f : A -> C . (f a)) (lam a . stuff)
+
+NEXT - add an argument
+
+(lam f : A -> B -> C . (f a ?)) (lam a b . stuff)
+
+
+My point is that this is equivalent to adding an argument to a let bound function.
+If a user DID use a lambda on the left of an application and wanted to do this transformation,
+the how else would they do it? On the other hand, why would a user want a lambda to
+be on the left of an application?
+
+Here is how you would do it without this mechanism:
+
+START
+(lam f : A -> C . (f a)) (lam a . stuff)
+1) - put argument in hole
+(lam f : A -> C . (f a)) {lam a . stuff}
+2) - add arg to f
+(lam f : A -> B -> C . (f a)) {lam a . stuff}
+3) - add arg to right lambda
+(lam f : A -> B -> C . (f a)) {lam a b . stuff}
+4) - fill hole
+(lam f : A -> B -> C . (f a)) (lam a b . stuff)
+
+Note that step 3 would clearly be allowed as the type of the right lambda expression
+is unconstrained because it is in a hole.
+On the other hand, it is less clear what rule would allow step 2, because the left lambda's
+type is constrained as it is applied to an argument (even though the argument is a hole).
+Lambdas on the left of applications seem to cause problems in general.
+
+So, for any given scheme for transformations, it should do one of the following:
+    - Don't allow lambdas on left of application
+    - Allow them but accept that they are unusable and no one will use them anyway
+    - Treat lambdas on left as as let expressions as far as the rules are concerned.
+    - Allow step 2) above as a result of the r.h.s. being a hole.
+    - ....
