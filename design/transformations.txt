@@ -236,3 +236,71 @@ We need to put g in a hole, but do we put it's arguments in the hole with it?
 So chaning things in - position causes argument lists to change somewhere, while changing
 something in + position could cause an entire application of variable to argument to go into a hole
 (if we decide on those options.)
+
+
+
+-------------------- Putting a function around a value (which may be in a hole)
+
+FROM
+let f : A -> B
+a
+
+TO
+let f : A -> B
+(f a)
+
+
+
+FROM
+let f : A -> B
+c
+
+TO
+let f : A -> B
+(f {c})
+
+FROM
+let f : A -> B
+let g : B -> C
+g {a}
+
+TO
+let f : A -> B
+let g : B -> C
+g (f a)
+
+FROM
+let f : A -> B
+let g : B -> C
+g {d}
+
+TO
+let f : A -> B
+let g : B -> C
+g (f {d})
+
+FROM
+let f : A -> B
+let g : C -> D
+g {a}
+
+TO
+let f : A -> B
+let g : B -> C
+g {f a}
+
+These are useful for something like
+FROM
+list : List Bool
+NEXT
+filter ? list
+NEXT
+sum {filter ? list}
+NEXT
+sum {map ? (filter ? list)}
+NEXT
+sum {map toInt (filter ? list)}
+NEXT
+sum (map toInt (filter ? list))
+
+building up a computation from inside out is pretty common when programming.
