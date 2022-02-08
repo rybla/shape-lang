@@ -194,3 +194,45 @@ So, for any given scheme for transformations, it should do one of the following:
     - Treat lambdas on left as as let expressions as far as the rules are concerned.
     - Allow step 2) above as a result of the r.h.s. being a hole.
     - ....
+
+
+-------------------- Changing input to an argument to a let bound lambda:
+
+Change input to input:
+
+FROM
+let f : (A -> C) -> D
+let f = lam g . ... (g a) ...
+
+TO
+let f : (A -> B -> C) -> D
+let f = lam g . ... (g a ?) ...
+
+OR
+let f : (A -> B -> C) -> D
+let f = lam g . ... ({g} a) ...
+
+^this second one contrasts the idea that we shouldn't end up with holes on the left.
+
+If we pick the first of these, then there seems to be something with +/- positioning of argument types. For example,
+by contrast:
+
+-------------------- Changing output to an argument to a let bound lambda:
+
+FROM
+let f : (A -> B) -> D
+let f = lam g . ... (g a) ...
+
+TO
+let f : (A -> C) -> D
+let f = lam g . ... {g a} ...
+
+OR
+let f : (A -> C) -> D
+let f = lam g . ... {g} a ...
+
+We need to put g in a hole, but do we put it's arguments in the hole with it?
+
+So chaning things in - position causes argument lists to change somewhere, while changing
+something in + position could cause an entire application of variable to argument to go into a hole
+(if we decide on those options.)
