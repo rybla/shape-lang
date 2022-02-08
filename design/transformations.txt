@@ -56,9 +56,24 @@ C syntax makes this view of applications more intuitive:
 (? a b) looks like it makes sense but ?(a,b) not so much.
 
 
+---------------------------- Change the type of a function in a hole on the right
+
+FROM
+let f : (A -> B) -> C
+let g : A -> B
+in ... (f g) ...
+
+TO
+let f : (A -> B) -> C
+let g : A -> C -> B
+in ... (f {g}) ...
+
+anywhere that a function no longer fits on the right, it should go into a hole.
+
+
 --------------------------------------------------------------------
 A transformation that we probably DONT want:
--------------- Modify one fucntion to accomadate another
+-------------- Modify one function to accomadate another
 
 FROM
 
@@ -74,6 +89,7 @@ f = ?
 g : ? -> B
 ... (f g) ...
 
+So g gets modified as a result of changing f's argument.
 This would be counterintuitive to a user as it creates an unusual nonlocal change.
 
 Instead,
