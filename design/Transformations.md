@@ -6,7 +6,7 @@ determine that that there is no nice theory behind it.
 
 No need to list obvious ones like "Fill a hole" or "Dig" or "Use a variable"
 
-## General thoughts
+## General Thoughts
 
 Henry
 
@@ -41,6 +41,47 @@ Henry
     of encoding the transformations we want into the behavior of this
     let-binding metaprogram rather than try to reinvent traversals over the
     syntax that let-binding already does.
+
+### Let-related transformations
+
+_Add parameter_
+
+```
+let f ..          : _ = _ in _[f ..] ~>
+let f .. (x:A) .. : _ = _ in _[f .. ? ..]
+```
+
+_Remove parameter_
+
+```
+let f .. (x:A) .. : _ = _ in _[f .. a ..] ~>
+let f ..          : _ = _ in _[f ..]
+```
+
+_Retype parameter_
+
+```
+let f .. (x:A) .. : _ = _ in _[f ..  a  ..] ~>
+let f .. (x:B) .. : _ = _ in _[f .. {a} ..]
+```
+
+_Retype output_
+
+```
+let f .. : A = _ in _[f ..] ~>
+let f .. : B = _ in _[{f ..}] ~>
+```
+
+_Rearrange parameters_
+
+```
+let f .. (x:A) .. (y:B) .. : _ = _ in _[f .. a .. b ..] ~>
+let f .. (y:B) .. (x:A) .. : _ = _ in _[f .. b .. a ..]
+```
+
+### Application-related transformations
+
+TODO
 
 ## Add an argument to an existing function
 
@@ -102,8 +143,31 @@ arguments for. So maybe instead of applications, we just have functions which
 take arguments as holes as a construct. C syntax makes this view of applications
 more intuitive: (? a b) looks like it makes sense but ?(a,b) not so much.
 
-- [henry] not sure what this means. you mean that there is a special syntactic
+- [henry] Not sure what this means. you mean that there is a special syntactic
   construct for "an application with a hole as its applicant"?
+
+[henry] I lean towards not allowing holes on the left of applications at all.
+because then there can be as many or few arguments as you want of any type, so
+its basically just an unstructured list of terms where the editor can't really
+help you at all. I can't think of a case when you'd actually want this. In the
+example you gave, I think the proper way to do it would be to first copy `a`,
+then replace `f a` with `g ? ?`, then paste `a` in the first hole and contstruct
+`b` in the second hole.
+
+[henry] there's probably a case to be made for "swapping" a function for another
+function of a compatible type i.e.
+
+```
+let f : A -> A -> B = ..
+let g : A -> A -> B = ..
+f a1 a2
+
+~>
+
+let f : A -> A -> B = ..
+let g : A -> A -> B = ..
+g a1 a2
+```
 
 ## Change the type of a function in a hole on the right
 
@@ -122,6 +186,10 @@ in ... (f {g}) ...
 ```
 
 anywhere that a function no longer fits on the right, it should go into a hole.
+
+[henry] this is already solved by the transformations that modify the type of a
+let if we require applications to always be eta-expanded (even if they are not
+displayed this way).
 
 ## Modify one function to accomadate another
 
@@ -145,6 +213,9 @@ g : ? -> B
 
 So g gets modified as a result of changing f's argument. This would be
 counterintuitive to a user as it creates an unusual nonlocal change.
+
+[henry] I didn't think about this before, but yeah if you dig a hole that is
+determined by unification, then nothing will happen.
 
 Instead,
 
@@ -171,6 +242,14 @@ g : A -> B
 If an argument no longer fits, put it in a hole so that the user remembers that
 it was there, but the code still typechecks.
 
+[henry] The insight here is the mirror-like relationship between filling and
+digging:
+
+- When typechecking after a fill, a unification between a hole and a term
+  produces a substitution that also fills the hole with the term.
+- When typechecking after a dig, a unification between a hole and a term
+  produces a replacement that also digs the term.
+
 ## Modify an in place lambda as a result of an argument change
 
 _STATUS:_ probably don't want
@@ -185,10 +264,12 @@ TO - user adds argument to argument of f
 
 let f : (A -> B -> C) -> D = ?
 in f (lam a b . stuff)
+```
 
-The alternative is to use the previous rule instead, so we would get
-the lambda put into a hole.
+The alternative is to use the previous rule instead, so we would get the lambda
+put into a hole.
 
+```
 let f : (A -> B -> C) -> D = ?
 in f {lam a . stuff}
 
@@ -233,16 +314,11 @@ would a user want a lambda to be on the left of an application?
 Here is how you would do it without this mechanism:
 
 ```
-START
 (lam f : A -> C . (f a)) (lam a . stuff)
-1) - put argument in hole
-(lam f : A -> C . (f a)) {lam a . stuff}
-2) - add arg to f
-(lam f : A -> B -> C . (f a)) {lam a . stuff}
-3) - add arg to right lambda
-(lam f : A -> B -> C . (f a)) {lam a b . stuff}
-4) - fill hole
-(lam f : A -> B -> C . (f a)) (lam a b . stuff)
+(lam f : A -> C . (f a)) {lam a . stuff}        -- put argument in hole
+(lam f : A -> B -> C . (f a)) {lam a . stuff}   -- add arg to f
+(lam f : A -> B -> C . (f a)) {lam a b . stuff} -- add arg to right lambda
+(lam f : A -> B -> C . (f a)) (lam a b . stuff) -- fill hole
 ```
 
 Note that step 3 would clearly be allowed as the type of the right lambda
