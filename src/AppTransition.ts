@@ -1,9 +1,10 @@
+import { List } from "immutable";
 import { Transition } from "./shape/Transition";
 
 export type AppTransition =
   | {
-      case: "transition"
-      transition: Transition
+      case: "transitions"
+      transitions: List<Transition>
     }
   | {
       case: "navigation"

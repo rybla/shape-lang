@@ -1,17 +1,23 @@
 import { List, Record } from "immutable";
 import React from "react";
 import "./App.css";
+import { AppEventHandler } from "./AppEventHandler";
 import { AppRenderer } from "./AppRenderer";
+import { AppUpdater } from "./AppUpdater";
 import { State } from "./shape/State";
 import { Index, Label } from "./shape/Syntax";
 
 export default class App extends React.Component<AppProps, AppState> {
   appState: AppState
+  appEventHandler: AppEventHandler
+  appUpdater: AppUpdater
   appRenderer: AppRenderer
 
   constructor(props: AppProps) {
     super(props)
     this.appState = new AppState()
+    this.appEventHandler = new AppEventHandler(this)
+    this.appUpdater = new AppUpdater(this)
     this.appRenderer = new AppRenderer(this)
   }
 
