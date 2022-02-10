@@ -23,3 +23,44 @@ New features:
 <term> ::= λ [<name> : <type>] . <prog> | <type>
 <type> ::= Π [<name> : <type>] . <prog>
 ```
+
+## Transformations on let-bindings
+
+_Add parameter_
+
+```
+let f .. : _ = _ in _[f ..] ~>
+let f .. (x:?) .. : _ = _ in _[f .. ? ..]
+```
+
+_Remove parameter_
+
+```
+let f .. (x:A) .. : _ = _ in _[f .. a ..] ~>
+let f .. : _ = _ in _[f ..]
+```
+
+_Rearrange parameters parameter_
+
+```
+let f .. (x:A) .. (y:B) .. : _ = _ in _[f .. a .. b ..] ~>
+let f .. (y:B) .. (x:A) .. : _ = _ in _[f .. b .. a ..]
+```
+
+_Add deep parameter_
+
+TODO: write algorithm to demonstrate this.
+
+_Dig type of parameter_
+
+```
+let f .. (x:A) .. : _ = _ in _[f ..  a  ..] ~>
+let f .. (x:?) .. : _ = _ in _[f .. {a} ..]
+```
+
+_Dig type of output_
+
+```
+let f .. : A = _ in _[ f .. ] ~>
+let f .. : ? = _ in _[{f ..}]
+```
