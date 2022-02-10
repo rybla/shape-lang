@@ -3,7 +3,7 @@ import React from "react";
 import "./App.css";
 import { AppRenderer } from "./AppRenderer";
 import { State } from "./shape/State";
-import { Index } from "./shape/Syntax";
+import { Index, Label } from "./shape/Syntax";
 
 export default class App extends React.Component<AppProps, AppState> {
   appState: AppState
@@ -27,13 +27,24 @@ export type AppProps = {}
 // AppState
 
 export type AppStateProps = {
-  focus: Index
-  state: State
+  state: State,
+  mode: Mode
 }
 
+export type Mode =
+  | {
+      case: "term",
+      focus: Index
+    }
+  | {
+      case: "label",
+      focus: Index,
+      label: Label
+    }
+
 export const defaultAppState: AppStateProps = {
-  focus: List(),
-  state: new State()
+  state: new State(),
+  mode: {case: "term", focus: List()}
 }
 
 export class AppState extends Record(defaultAppState) {}

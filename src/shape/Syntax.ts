@@ -130,4 +130,3 @@ export type IndexStep =
         | {case: "applicant"}
         | {case: "argument", i: number}
     }
-  | {case: "end"}
