@@ -39,7 +39,7 @@ export type AppStateProps = {
 
 export type Mode =
   | {
-      case: "term",
+      case: "normal",
       focus: Index
     }
   | {
@@ -50,7 +50,7 @@ export type Mode =
 
 export const defaultAppState: AppStateProps = {
   state: new State(),
-  mode: {case: "term", focus: List()}
+  mode: {case: "normal", focus: List()}
 }
 
 export class AppState extends Record(defaultAppState) {}
