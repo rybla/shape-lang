@@ -4,12 +4,17 @@ import { List } from "immutable";
 
 export type Program = List<Declaration>
 
-export type Declaration = DefineTerm | DefineData
+export type Declaration = DefineTerm | DefineType | DefineData
 
 export type DefineTerm = {
   label: Label,
   signature: Type, 
   value: Term
+}
+
+export type DefineType = {
+  label: Label,
+  parameters: List<Type>,
 }
 
 export type DefineData = {
@@ -71,24 +76,51 @@ export type Hole = {
 
 // Type
 
-export type Type = Base | Arrow | Data 
+export type Type = ArrowType | NeutralType | HoleType
 
-export type Base = {
-  case: "basic",
-  subcase: "unit" | "boolean" | "natural" | "integer"
-}
-
-export type Arrow = {
+export type ArrowType = {
   case: "arrow",
   arguments: List<Type>,
-  codomain: Type
+  codomain: Type,
+  format: Format
 }
 
-export type Data = {
+export type NeutralType = {
   case: "data",
   label: Label, 
-  arguments: List<Type>
+  arguments: List<Type>,
+  format: Format
 }
+
+export type HoleType = {
+  case: "hole",
+  holeId: Symbol,
+  format: Format
+}
+
+// Kind
+
+export type Kind = ArrowKind | UnitKind | HoleKind
+
+export type ArrowKind = {
+  case: "arrow",
+  arguments: List<Kind>,
+  codomain: Kind,
+  format: Format
+}
+
+export type UnitKind = {
+  case: "unit",
+  format: Format
+}
+
+export type HoleKind = {
+  case: "hole",
+  holeId: Symbol,
+  format: Format
+}
+
+// Label
 
 export type Label = {value: string}
 
