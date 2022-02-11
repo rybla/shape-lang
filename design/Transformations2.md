@@ -20,7 +20,8 @@ New features:
 
 ```
 <prog> ::= let [<name> : <type> = <term>] in <term>
-<term> ::= λ [<name> : <type>] . <prog> | <type>
+<term> ::= λ [<name> : <type>] . <prog> | <neu> | <type> | <hole>
+<neu>  ::= <var> [<term>]
 <type> ::= Π [<name> : <type>] . <prog>
 ```
 
