@@ -4,8 +4,7 @@
 
 New features:
 
-- Parameters/arguments for lambdas, pis, and applications are now represented as
-  lists
+- Parameters/arguments for lambdas and applications are now represented as lists
   - This allows easier manipulation of parameters/arguments
 - Holes cannot appear as the applicant of an application
   - It doesn't make sense to give the arguments to a function before you know
@@ -19,10 +18,9 @@ New features:
     context at which points).
 
 ```
-<prog> ::= let [<name> : <type> = <term>] in <term>
-<term> ::= λ [<name> : <type>] . <prog> | <neu> | <type> | <hole>
-<neu>  ::= <var> [<term>]
-<type> ::= Π [<name> : <type>] . <prog>
+<block> ::= let [<name> : <type> = <term>] in <term>
+<term>  ::= λ [<name> : <type> . <block>] | <neu> | <hole>
+<type>  ::= <type> -> <type> | <basic-type>
 ```
 
 ## Transformations on let-bindings
