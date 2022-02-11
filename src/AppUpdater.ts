@@ -21,6 +21,7 @@ export class AppUpdater {
           undefined,
       this.app.appState as AppState | undefined
     )
+    
     if (appState) {
       this.app.setState(appState)
       return true
