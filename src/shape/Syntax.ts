@@ -4,20 +4,21 @@ import { List } from "immutable";
 
 export type Program = List<Declaration>
 
-export type Declaration = DefineTerm | DefineType | DefineData
+export type Declaration = DeclareData | DeclareType | DeclareTerm
 
-export type DefineTerm = {
+export type DeclareTerm = {
   label: Label,
   signature: Type, 
-  value: Term
+  value: Block
 }
 
-export type DefineType = {
+export type DeclareType = {
   label: Label,
   parameters: List<Type>,
+  value: Type
 }
 
-export type DefineData = {
+export type DeclareData = {
   label: Label,
   parameters: List<Type>,
   constructors: List<Constructor>
@@ -27,75 +28,6 @@ export type Constructor = {
   label: Label,
   parameters: List<Type>,
   codomain: Type
-}
-
-// Block
-
-export type Block = {
-  bindings: List<{label: Label, signature: Type, value: Term}>,
-  body: Term,
-  format: Format
-}
-
-// Term
-
-export type Term = Lambda |  Neutral | Match | Hole
-
-export type Lambda = {
-  case: "lambda",
-  parameters: List<{label: Label, domain: Type}>,
-  body: Block,
-  format: Format
-}
-
-export type Neutral = {
-  case: "neutral",
-  applicant: Label,
-  arguments: List<Term>,
-  format: Format
-}
-
-export type Match = {
-  case: "match",
-  argument: Term,
-  branches: List<[Pattern, Term]>
-}
-
-export type Pattern = {
-  label: Label,
-  paramaters: List<Label>
-}
-
-export type Hole = {
-  case: "hole",
-  holeId: Symbol,
-  weakening: List<Label>,
-  substitution: Substitution<Label, Term>,
-  format: Format
-}
-
-// Type
-
-export type Type = ArrowType | NeutralType | HoleType
-
-export type ArrowType = {
-  case: "arrow",
-  arguments: List<Type>,
-  codomain: Type,
-  format: Format
-}
-
-export type NeutralType = {
-  case: "data",
-  label: Label, 
-  arguments: List<Type>,
-  format: Format
-}
-
-export type HoleType = {
-  case: "hole",
-  holeId: Symbol,
-  format: Format
 }
 
 // Kind
@@ -117,6 +49,91 @@ export type UnitKind = {
 export type HoleKind = {
   case: "hole",
   holeId: Symbol,
+  format: Format
+}
+
+// Type
+
+export type Type = ArrowType | NeutralType | HoleType
+
+export type ArrowType = {
+  case: "arrow",
+  arguments: List<Type>,
+  codomain: Type,
+  format: Format
+}
+
+export type NeutralType = {
+  case: "neutral",
+  applicant: Label, 
+  arguments: List<Type>,
+  format: Format
+}
+
+export type HoleType = {
+  case: "hole",
+  holeId: Symbol,
+  format: Format
+}
+
+// Block
+
+export type Block = {
+  bindings: List<BlockBinding>,
+  body: Term,
+  format: Format
+}
+
+export type BlockBinding = {
+  label: Label,
+  signature: Type,
+  value: Term
+}
+
+// Term
+
+export type Term = Lambda |  Neutral | Match | Hole
+
+export type Lambda = {
+  case: "lambda",
+  parameters: List<LambdaParameter>,
+  body: Block,
+  format: Format
+}
+
+export type LambdaParameter = {
+  label: Label,
+  domain: Type
+}
+
+export type Neutral = {
+  case: "neutral",
+  applicant: Label,
+  arguments: List<Term>,
+  format: Format
+}
+
+export type Match = {
+  case: "match",
+  argument: Term,
+  branches: List<MatchBranch>
+}
+
+export type MatchBranch = {
+  pattern: MatchPattern,
+  body: Block
+}
+
+export type MatchPattern = {
+  label: Label,
+  paramaters: List<Label>
+}
+
+export type Hole = {
+  case: "hole",
+  holeId: Symbol,
+  weakening: List<Label>,
+  substitution: Substitution<Label, Term>,
   format: Format
 }
 
@@ -166,47 +183,115 @@ export type SubstitutionItem<A, B> = [A, B]
 
 // Index
 
-export type Index = List<{}>
+export type Index = List<IndexProgram | IndexDeclaration | IndexKind | IndexType | IndexTerm>
 
-// TODO: merge indexing with changes to grammar
+export type IndexProgram =
+  | {case: "here"}
+  | {
+      case: "declaration",
+      i: number,
+      index: IndexDeclaration
+    }
 
-// export type Index = List<IndexStep>
+export type IndexDeclaration =
+  | {case: "here"}
+  | {
+      case: "data",
+      sub:
+        | {case: "label"}
+        | {case: "parameter", i: number, index: IndexType}
+        | {case: "constructor", i: number, index: IndexConstructor}
+    }
+  | {
+      case: "type",
+      sub:
+        | {case: "label"}
+        | {case: "parameter", i: number}
+        | {case: "value", index: IndexType}
+    }
+  | {
+      case: "term",
+      sub:
+        | {case: "label"}
+        | {case: "signature", index: IndexType}
+        | {case: "value", index: IndexTerm}
+    }
 
-// export type IndexStep =
-//   | {
-//       case: "block",
-//       sub:
-//         | {
-//             case: "binding",
-//             i: number,
-//             sub: {case: "label"} | {case: "signature"} | {case: "value"},
-//             next: Index
-//           }
-//         | {case: "body"}
-//     }
-//   | {
-//       case: "pi",
-//       sub:
-//         | {
-//             case: "parameter",
-//             i: number,
-//             sub: {case: "label"} | {case: "signature"}
-//           }
-//         | {case: "codomain"}
-//     }
-//   | {
-//       case: "lambda",
-//       sub:
-//         | {
-//             case: "parameter",
-//             i: number,
-//             sub: {case: "label"} | {case: "signature"}
-//           }
-//         | {case: "body"}
-//     }
-//   | {
-//       case: "neutral",
-//       sub:
-//         | {case: "applicant"}
-//         | {case: "argument", i: number}
-//     }
+export type IndexConstructor = 
+  | {case: "here"}
+  | {case: "label"}
+  | {case: "parameter", i: number, index: IndexType}
+  | {case: "codomain", index: IndexType}
+
+export type IndexKind = 
+  | {case: "here"}
+  | {
+      case: "arrow",
+      sub:
+        | {case: "argument", i: number, index: IndexKind}
+        | {case: "codomain", index: IndexKind}
+    }
+
+export type IndexType = 
+  | {case: "here"}
+  | {
+      case: "arrow",
+      sub:
+        | {case: "argument", i: number, index: IndexType}
+        | {case: "codomain", index: IndexType}
+    }
+  | {
+      case: "neutral",
+      sub:
+        | {case: "applicant"}
+        | {case: "argument", i: number, index: IndexType}
+    }
+
+export type IndexBlock = 
+  | {case: "here"}
+  | {case: "binding", i: number, index: IndexBlockBinding}
+  | {case: "body", index: IndexTerm}
+
+export type IndexBlockBinding = 
+  | {case: "here"}
+  | {case: "label"}
+  | {case: "signature", index: IndexType}
+  | {case: "value", index: IndexTerm}
+  | {case: "here"}
+
+export type IndexTerm = 
+  | {case: "here"}
+  | {
+      case: "lambda",
+      sub:
+        | {case: "parameter", i: number, index: IndexLambdaParameter}
+        | {case: "body", index: IndexBlock}
+    }
+  | {
+      case: "neutral",
+      sub:
+        | {case: "applicant"}
+        | {case: "argument", i: number, index: IndexTerm}
+    }
+  | {
+      case: "match",
+      sub:
+        | {case: "argument", index: IndexTerm}
+        | {case: "branch", i: number, index: IndexMatchBranch}
+    }
+  | {case: "here"}
+
+export type IndexMatchBranch = 
+  | {case: "here"}
+  | {case: "pattern", index: IndexMatchPattern}
+  | {case: "body", index: IndexTerm}
+
+export type IndexMatchPattern = 
+  | {case: "here"}
+  | {case: "label"}
+  | {case: "parameter", i: number}
+
+export type IndexLambdaParameter =
+  | {case: "here"}
+  | {case: "label"}
+  | {case: "domain"}
