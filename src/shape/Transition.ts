@@ -1,29 +1,56 @@
-import { DeBruijn } from "./Syntax"
+import { Label } from "./Syntax";
 
 export type Transition =
   | {
-      case: "term"
+      case: "declaration",
       sub:
-        | {case: "fill universe"}
-        | {case: "fill pi"}
-        | {case: "fill lambda"}
-        | {case: "fill neutral", applicant: DeBruijn}
+        | {case: "insert term"}
+        | {case: "insert type"}
+        | {case: "insert data"}
+    }
+  | {
+      case: "kind",
+      sub:
+        | {case: "fill arrow"}
+        | {case: "fill unit"}
         | {case: "dig"}
     }
   | {
-      case: "block"
+      case: "type",
       sub:
-        | {case: "insert binding"}
+        | {case: "fill arrow"}
+        | {case: "fill neutral", applicant: Label}
+        | {case: "dig"}
     }
   | {
-      case: "parameter"
+      case: "block",
       sub:
         | {case: "insert"}
+        | {case: "delete"}
     }
   | {
-      case: "label"
+      case: "term",
+      sub:
+        | {case: "fill lambda"}
+        | {case: "fill neutral", applicant: Label}
+        | {case: "dig"}
+    }
+  | {
+      case: "parameter",
+      sub:
+        | {case: "insert"}
+        | {case: "delete"}
+    }
+  | {
+      case: "label",
       sub:
         | {case: "append", value: string}
         | {case: "backspace"}
+    }
+  | {
+      case: "format",
+      sub:
+        | {case: "toggle indented"}
+        | {case: "toggle unannotated"}
     }
   
