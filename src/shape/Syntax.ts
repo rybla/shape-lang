@@ -9,25 +9,29 @@ export type Declaration = DeclareData | DeclareType | DeclareTerm
 export type DeclareTerm = {
   label: Label,
   signature: Type, 
-  value: Block
+  value: Block,
+  format: Format
 }
 
 export type DeclareType = {
   label: Label,
   parameters: List<Type>,
-  value: Type
+  value: Type,
+  format: Format
 }
 
 export type DeclareData = {
   label: Label,
   parameters: List<Type>,
-  constructors: List<Constructor>
+  constructors: List<Constructor>,
+  format: Format
 }
 
 export type Constructor = {
   label: Label,
   parameters: List<Type>,
-  codomain: Type
+  codomain: Type,
+  format: Format
 }
 
 // Kind
@@ -87,7 +91,8 @@ export type Block = {
 export type BlockBinding = {
   label: Label,
   signature: Type,
-  value: Term
+  value: Term,
+  format: Format
 }
 
 // Term
@@ -103,7 +108,8 @@ export type Lambda = {
 
 export type LambdaParameter = {
   label: Label,
-  domain: Type
+  domain: Type,
+  format: Format
 }
 
 export type Neutral = {
@@ -116,17 +122,20 @@ export type Neutral = {
 export type Match = {
   case: "match",
   argument: Term,
-  branches: List<MatchBranch>
+  branches: List<MatchBranch>,
+  format: Format
 }
 
 export type MatchBranch = {
   pattern: MatchPattern,
-  body: Block
+  body: Block,
+  format: Format
 }
 
 export type MatchPattern = {
   label: Label,
-  paramaters: List<Label>
+  paramaters: List<Label>,
+  format: Format
 }
 
 export type Hole = {
