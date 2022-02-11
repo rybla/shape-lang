@@ -18,9 +18,12 @@ New features:
     context at which points).
 
 ```
-<block> ::= let [<name> : <type> = <term>] in <term>
-<term>  ::= λ [<name> : <type> . <block>] | <neu> | <hole>
-<type>  ::= <type> -> <type> | <basic-type>
+<program>     ::= [<declaration>]
+<declaration> ::= definition <name> : <type> = <term>
+                | data <name> [<name>] where [<name> : [<type> ->] <name> [<type>]]
+<block>       ::= let [<name> : <type> = <term>] in <term>
+<term>        ::= λ [<name> : <type> . <block>] | <neu> | <hole>
+<type>        ::= [<type> ->] <type> | <name> [<type>]
 ```
 
 ## Transformations on let-bindings
