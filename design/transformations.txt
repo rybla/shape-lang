@@ -304,3 +304,36 @@ NEXT
 sum (map toInt (filter ? list))
 
 building up a computation from inside out is pretty common when programming.
+
+
+------------------------------------------------------------------------------------
+--- Digging/changing one thing can cause a whole bunch of other stuff to get put into holes:
+
+FROM
+let f : (n : Nat) -> P n -> T
+in f 5 e
+
+TO - dig 5
+
+let f : (n : Nat) -> P n -> T
+in if ? {e}
+
+So, e must go in a hole as a result.
+
+Another example:
+
+FROM:
+let T : U
+let t : T
+let f : T -> U
+let f : (a : T) -> f a
+
+TO - dig first U
+
+let T : ?
+let t : {T}
+let f : {T} -> U
+let f : (a : {T}) -> f {a}
+
+
+so arbitrarily much stuff can end up being in holes as a result of a single dig.
