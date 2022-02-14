@@ -2,8 +2,8 @@
 
 This file is the current working version of our plan for what transformations the editor should have.
 It does not explain how they should be implemented.
-For example, if a transformation creates type problems, it should recursively cause more digs.
-But this file just lists what the transformations are.
+For example, if a transformation creates type problems, it may recursively cause more digs.
+But this short file just lists what the transformations are.
 
 - definition list manipulations
     - add a new definition
