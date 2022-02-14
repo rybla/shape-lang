@@ -1,19 +1,10 @@
-import { List } from "immutable";
-
 export type Block = {
-  bindings: List<{label: Label, signature: Term, value: Term}>,
+  bindings: {label: Label, signature: Term, value: Term}[],
   body: Term,
   format: Format
 }
 
 export type Term = Universe | Pi | Lambda | Neutral | Hole
-
-export type Lambda = {
-  case: "lambda",
-  parameters: List<{label: Label, domain: Term}>,
-  body: Block,
-  format: Format
-}
 
 export type Universe = {
   case: "universe",
@@ -23,15 +14,22 @@ export type Universe = {
 
 export type Pi = {
   case: "pi",
-  parameters: List<{label: Label, domain: Term}>,
+  parameters: {label: Label, domain: Term}[],
   codomain: Block,
+  format: Format
+}
+
+export type Lambda = {
+  case: "lambda",
+  parameters: {label: Label, domain: Term}[],
+  body: Block,
   format: Format
 }
 
 export type Neutral = {
   case: "neutral",
   applicant: DeBruijn,
-  arguments: List<Term>,
+  arguments: Term[],
   format: Format
 }
 
@@ -58,7 +56,7 @@ export function freshHole(): Hole {
     case: "hole",
     holeId,
     weakening: 0,
-    substitution: List(),
+    substitution: [],
     format: defaultFormat()
   }
 }
@@ -76,7 +74,7 @@ export function defaultFormat(): Format {
 
 // Context
 
-export type Context = List<ContextItem>
+export type Context = [ContextItem]
 export type ContextItem = {
   label: Label,
   signature: Term,
@@ -85,12 +83,23 @@ export type ContextItem = {
 
 // Substitution
 
-export type Substitution<A, B> = List<SubstitutionItem<A, B>>
-export type SubstitutionItem<A, B> = [A, B]
+export type Substitution<A, B> = SubstitutionItem<A, B>[]
+export type SubstitutionItem<A, B> = {
+  key: A,
+  value: B
+}
 
-// Index
+// Mode
 
-export type Index = List<IndexStep>
+export type Mode = {
+  index: Index,
+  sub:
+    | {case: "edit"}
+    | {case: "label", label: Label}
+}
+
+
+export type Index = IndexStep[]
 
 export type IndexStep =
   | {
@@ -129,3 +138,11 @@ export type IndexStep =
         | {case: "applicant"}
         | {case: "argument", i: number},
     }
+
+export function modifyInBlock<A>(block: Block, index: Index, modifier: (a: A) => A): void {
+  throw new Error()
+}
+
+export function modifyInTerm<A>(term: Term, index: Index, modifier: (a: A) => A): void {
+  throw new Error()
+}
