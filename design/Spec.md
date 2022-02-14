@@ -29,3 +29,4 @@ But this short file just lists what the transformations are.
     - add an argument
     - remove an argument
     - move an argument to a different position
+    - change output type
