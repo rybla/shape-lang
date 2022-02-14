@@ -11,30 +11,6 @@ export class Updater {
 
   update(state: State, transition: Transition): State | undefined {
     switch (transition.case) {
-      case "declaration": {
-        switch (transition.sub.case) {
-          case "insert term": throw new Error()
-          case "insert type": throw new Error()
-          case "insert data": throw new Error()
-        }
-        throw new Error()
-      }
-      case "kind": {
-        switch (transition.sub.case) {
-          case "fill unit": throw new Error()
-          case "fill arrow": throw new Error()
-          case "dig": throw new Error()
-        }
-        throw new Error()
-      }
-      case "type": {
-        switch (transition.sub.case) {
-          case "fill neutral": throw new Error()
-          case "fill arrow": throw new Error()
-          case "dig": throw new Error()
-        }
-        throw new Error()
-      }
       case "block": {
         switch (transition.sub.case) {
           case "insert": throw new Error()
@@ -44,6 +20,8 @@ export class Updater {
       }
       case "term": {
         switch (transition.sub.case) {
+          case "fill universe": throw new Error()
+          case "fill pi": throw new Error()
           case "fill lambda": throw new Error()
           case "fill neutral": throw new Error()
           case "dig": throw new Error()
