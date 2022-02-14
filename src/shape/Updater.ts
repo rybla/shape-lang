@@ -1,6 +1,8 @@
 import App from "../App";
 import { State } from "./State";
 import { Transition } from "./Transition";
+import { Block, BlockProps } from "./Syntax"
+import { Record } from "immutable";
 
 export class Updater {
   app: App
@@ -13,7 +15,19 @@ export class Updater {
     switch (transition.case) {
       case "block": {
         switch (transition.sub.case) {
-          case "insert": throw new Error()
+          case "insert": {
+            if (this.app.appState.mode.case === "normal") {
+              // TODO: how to deeply update the records?
+              state.update("block", (block) => block.updateIn(this.app.appState.mode.focus, (target) => {
+                if (Record.isRecord<BlockProps>)
+                // if (Record.isRecord(target)) {
+                //   // target.set("")
+                // }
+              }))
+              throw new Error()
+            }
+            throw new Error()
+          }
           case "delete": throw new Error()
         }
         throw new Error()
@@ -32,13 +46,6 @@ export class Updater {
         switch (transition.sub.case) {
           case "insert": throw new Error()
           case "delete": throw new Error()
-        }
-        throw new Error()
-      }
-      case "label": {
-        switch (transition.sub.case) {
-          case "append": throw new Error()
-          case "backspace": throw new Error()
         }
         throw new Error()
       }

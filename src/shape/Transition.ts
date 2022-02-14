@@ -23,12 +23,6 @@ export type Transition =
         | {case: "delete"}
     }
   | {
-      case: "label",
-      sub:
-        | {case: "append", value: string}
-        | {case: "backspace"}
-    }
-  | {
       case: "format",
       sub:
         | {case: "toggle indented"}

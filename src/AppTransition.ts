@@ -18,8 +18,14 @@ export type AppTransition =
         | {case: "top"}
     }
   | {
-      case: "mode"
+      case: "label",
       sub:
-        | {case: "term"}
-        | {case: "label"}
+        | {case: "append", value: string}
+        | {case: "backspace"}
     }
+  | {
+    case: "mode"
+    sub:
+      | {case: "term"}
+      | {case: "label"}
+  }
