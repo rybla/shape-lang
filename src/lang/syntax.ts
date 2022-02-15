@@ -1,3 +1,36 @@
+export type Program = {
+  case: "program",
+  definition: Definition[]
+}
+
+export type Definition = TypeDefinition | DataDefinition | TermDefinition
+
+export type TypeDefinition = {
+  case: "define type",
+  label: Label,
+  type: Type
+}
+
+export type DataDefinition = {
+  case: "define data",
+  label: Label,
+  constructors: Constructor[]
+}
+
+export type Constructor =
+  | {case: "constructor", label: Label, parameters: Parameter[]}
+
+export type TermDefinition = {
+  case: "define term",
+  label: Label,
+  type: Type,
+  block: Term
+}
+
+export type Type =
+  | {case: "arrow", parameters: Type[], codomain: Type}
+  | {case: "data", label: Label}
+
 export type Block = {
   case: "block",
   bindings: Binding[],
@@ -12,20 +45,7 @@ export type Binding = {
   value: Term
 }
 
-export type Term = Universe | Pi | Lambda | Neutral | Hole
-
-export type Universe = {
-  case: "universe",
-  level: number,
-  format: Format
-}
-
-export type Pi = {
-  case: "pi",
-  parameters: Parameter[],
-  codomain: Block,
-  format: Format
-}
+export type Term = Lambda | Neutral | Hole
 
 export type Lambda = {
   case: "lambda",
@@ -43,7 +63,7 @@ export type Parameter = {
 
 export type Neutral = {
   case: "neutral",
-  applicant: DeBruijn,
+  applicant: Label,
   arguments: Term[],
   format: Format
 }
@@ -51,13 +71,10 @@ export type Neutral = {
 export type Hole = {
   case: "hole",
   holeId: Symbol,
-  weakening: DeBruijn,
-  substitution: Substitution<DeBruijn, Term>,
+  weakening: Label[],
+  substitution: Substitution<Label, Term>,
   format: Format
 }
-
-// Variables references are DeBruijn levels
-export type DeBruijn = number
 
 export type Label = {case: "label", value: string}
 
@@ -70,7 +87,7 @@ export function freshHole(): Hole {
   return {
     case: "hole",
     holeId,
-    weakening: 0,
+    weakening: [],
     substitution: [],
     format: defaultFormat()
   }
@@ -138,7 +155,7 @@ export function replaceAt<S extends Indexable, T extends Indexable>(source: S, i
 }
 
 // The kinds of things you can index
-export type Indexable = Block | Binding | Term | Parameter | Label
+export type Indexable = Program | Definition | Constructor | Block | Binding | Term | Parameter | Label
 
 export type Index = IndexItem[]
 
@@ -149,39 +166,47 @@ export type IndexItem = {
 
 export type IndexStep =
   | {
+      case: "program",
+      sub: {case: "definition", i: number}
+    }
+  | {
+      case: "type definition",
+      sub: {case: "label"} | {case: "type"}
+    }
+  | {
+      case: "data definition",
+      sub: {case: "label"} | {case: "constructor", i: number}
+    }
+  | {
+      case: "constructor",
+      sub: {case: "label"} | {case: "paramater", i: number}
+    }
+  | {
+      case: "term definition",
+      sub: {case: "label"} | {case: "type"} | {case: "block"}
+    }
+  | {
       case: "block",
-      sub:
-        | {
-            case: "binding",
-            i: number,
-            sub: {case: "label"} | {case: "signature"} | {case: "value"},
-          }
-        | {case: "body"},
+      sub: {case: "binding", i: number} | {case: "body"},
+    }
+  | {
+      case: "binding",
+      sub: {case: "label"} | {case: "signature"} | {case: "value"},
     }
   | {
       case: "pi",
-      sub:
-        | {
-            case: "parameter",
-            i: number,
-            sub: {case: "label"} | {case: "signature"}
-          }
-        | {case: "codomain"}
+      sub: {case: "parameter", i: number} | {case: "codomain"}
     }
   | {
       case: "lambda",
-      sub:
-        | {
-            case: "parameter",
-            i: number,
-            sub: {case: "label"} | {case: "signature"}
-          }
-        | {case: "body"}
+      sub: {case: "parameter", i: number} | {case: "body"}
+    }
+  | {
+      case: "parameter",
+      sub: {case: "label"} | {case: "signature"}
     }
   | {
       case: "neutral",
-      sub:
-        | {case: "applicant"}
-        | {case: "argument", i: number},
+      sub: {case: "applicant"} | {case: "argument", i: number},
     }
 
