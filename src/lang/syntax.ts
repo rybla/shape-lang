@@ -1,7 +1,15 @@
 export type Block = {
-  bindings: {label: Label, signature: Term, value: Term}[],
+  case: "block",
+  bindings: Binding[],
   body: Term,
   format: Format
+}
+
+export type Binding = {
+  case: "binding",
+  label: Label,
+  signature: Term,
+  value: Term
 }
 
 export type Term = Universe | Pi | Lambda | Neutral | Hole
@@ -14,15 +22,22 @@ export type Universe = {
 
 export type Pi = {
   case: "pi",
-  parameters: {label: Label, domain: Term}[],
+  parameters: Parameter[],
   codomain: Block,
   format: Format
 }
 
 export type Lambda = {
   case: "lambda",
-  parameters: {label: Label, domain: Term}[],
+  parameters: Parameter[],
   body: Block,
+  format: Format
+}
+
+export type Parameter = {
+  case: "parameter",
+  label: Label,
+  domain: Term,
   format: Format
 }
 
@@ -44,10 +59,10 @@ export type Hole = {
 // Variables references are DeBruijn levels
 export type DeBruijn = number
 
-export type Label = {value: string}
+export type Label = {case: "label", value: string}
 
 export function freshLabel(): Label {
-  return {value: ""}
+  return {case: "label", value: ""}
 }
 
 export function freshHole(): Hole {
@@ -57,6 +72,25 @@ export function freshHole(): Hole {
     holeId,
     weakening: 0,
     substitution: [],
+    format: defaultFormat()
+  }
+}
+
+// Creates an empty block (0 bindings) with a fresh hole
+export function freshBlock(): Block {
+  return {
+    case: "block",
+    bindings: [],
+    body: freshHole(),
+    format: defaultFormat()
+  }
+}
+
+export function freshParameter(): Parameter {
+  return {
+    case: "parameter",
+    label: freshLabel(),
+    domain: freshHole(),
     format: defaultFormat()
   }
 }
@@ -74,7 +108,7 @@ export function defaultFormat(): Format {
 
 // Context
 
-export type Context = [ContextItem]
+export type Context = ContextItem[]
 export type ContextItem = {
   label: Label,
   signature: Term,
@@ -91,15 +125,27 @@ export type SubstitutionItem<A, B> = {
 
 // Mode
 
-export type Mode = {
-  index: Index,
-  sub:
-    | {case: "edit"}
-    | {case: "label", label: Label}
+export type Mode = 
+  | {case: "edit", index: Index}
+  | {case: "label", index: Index, label: Label}
+
+export function lookupAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context): {target: T, gamma: Context} {
+  throw new Error("unimplemented")
 }
 
+export function replaceAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context, replace: (target: T, gamma: Context) => T): void {
+  throw new Error("unimplemented")
+}
 
-export type Index = IndexStep[]
+// The kinds of things you can index
+export type Indexable = Block | Binding | Term | Parameter | Label
+
+export type Index = IndexItem[]
+
+export type IndexItem = {
+  target: Indexable,
+  step: IndexStep
+}
 
 export type IndexStep =
   | {
@@ -139,10 +185,3 @@ export type IndexStep =
         | {case: "argument", i: number},
     }
 
-export function modifyInBlock<A>(block: Block, index: Index, modifier: (a: A) => A): void {
-  throw new Error()
-}
-
-export function modifyInTerm<A>(term: Term, index: Index, modifier: (a: A) => A): void {
-  throw new Error()
-}
