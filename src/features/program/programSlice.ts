@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { List, Map } from "immutable";
-import { defaultFormat, freshBlock, freshHole, Label, lookupAt, Mode, Module, replaceAt, Term } from "../../lang/syntax";
+import { Map } from "immutable";
+import { Context, defaultFormat, freshBlock, freshHole, Index, Indexable, Label, Mode, Module, Term } from "../../lang/syntax";
 
 export type ProgramState = {
   module: Module,
@@ -10,10 +10,10 @@ export type ProgramState = {
 const initialState: ProgramState = {
   module: {
     case: "module",
-    statements: List(),
+    statements: [],
     format: defaultFormat()
   },
-  mode: {case: "edit", index: List()}
+  mode: {case: "edit", index: []}
 }
 
 export const programSlice = createSlice({
@@ -32,14 +32,12 @@ export const programSlice = createSlice({
         state.module,
         state.mode.index,
         Map(),
-        (target, gamma) => {
-          return {
+        (target, gamma) => ({
             case: "lambda",
-            parameters: List(),
+            parameters: [],
             body: freshBlock(),
             format: defaultFormat()
-          }
-        }
+        })
       )
     },
     term_fillNeutral: (state, action: PayloadAction<{label: Label, argCount: number}>) => {
@@ -104,5 +102,13 @@ export type ArrayManipulation =
   | {case: "insert", i: number}
   | {case: "delete", i: number}
   | {case: "move", i: number, j: number}
+
+export function lookupAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context): {target: T, gamma: Context} {
+  throw new Error("unimplemented")
+}
+
+export function replaceAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context, replace: (target: T, gamma: Context) => T): S {
+  throw new Error("unimplemented")
+}
 
 export default programSlice

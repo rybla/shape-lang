@@ -1,10 +1,10 @@
 // Module
 
-import { List, Map } from "immutable"
+import { Map } from "immutable"
 
 export type Module = {
   case: "module",
-  statements: List<Statement>,
+  statements: Statement[],
   format: Format
 }
 
@@ -15,14 +15,14 @@ export type Statement = DataDefinition | TermDefinition
 export type DataDefinition = {
   case: "data definition",
   label: Label,
-  constructors: List<Constructor>,
+  constructors: Constructor[],
   format: Format
 }
 
 export type Constructor = {
   case: "constructor",
   label: Label,
-  domains: List<Type>,
+  domains: Type[],
   format: Format
 }
 
@@ -48,7 +48,7 @@ export type Type = ArrowType | DataType
 
 export type ArrowType = {
   case: "arrow",
-  domains: List<Type>,
+  domains: Type[],
   codomain: Type,
   format: Format
 }
@@ -63,7 +63,7 @@ export type DataType = {
 
 export type Block = {
   case: "block",
-  bindings: List<Binding>,
+  bindings: Binding[],
   body: Term,
   format: Format
 }
@@ -82,7 +82,7 @@ export type Term = Lambda | Neutral | Hole
 
 export type Lambda = {
   case: "lambda",
-  parameters: List<Parameter>,
+  parameters: Parameter[],
   body: Block,
   format: Format
 }
@@ -97,14 +97,14 @@ export type Parameter = {
 export type Neutral = {
   case: "neutral",
   applicant: Label,
-  args: List<Term>,
+  args: Term[],
   format: Format
 }
 
 export type Hole = {
   case: "hole",
   holeId: Symbol,
-  weakening: List<Label>,
+  weakening: Label[],
   substitution: Substitution<Label, Term>,
   format: Format
 }
@@ -124,8 +124,8 @@ export function freshHole(): Hole {
   return {
     case: "hole",
     holeId,
-    weakening: List(),
-    substitution: List(),
+    weakening: [],
+    substitution: [],
     format: defaultFormat()
   }
 }
@@ -134,7 +134,7 @@ export function freshHole(): Hole {
 export function freshBlock(): Block {
   return {
     case: "block",
-    bindings: List(),
+    bindings: [],
     body: freshHole(),
     format: defaultFormat()
   }
@@ -166,7 +166,7 @@ export type Context = Map<Label, Type>
 
 // Substitution
 
-export type Substitution<A, B> = List<SubstitutionItem<A, B>>
+export type Substitution<A, B> = SubstitutionItem<A, B>[]
 export type SubstitutionItem<A, B> = {
   key: A,
   value: B
@@ -178,18 +178,10 @@ export type Mode =
   | {case: "edit", index: Index}
   | {case: "label", index: Index, label: Label}
 
-export function lookupAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context): {target: T, gamma: Context} {
-  throw new Error("unimplemented")
-}
-
-export function replaceAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context, replace: (target: T, gamma: Context) => T): void {
-  throw new Error("unimplemented")
-}
-
 // The kinds of things you can index
 export type Indexable = Module | Statement | Constructor | Block | Binding | Term | Parameter | Label
 
-export type Index = List<IndexItem>
+export type Index = IndexItem[]
 
 export type IndexItem = {
   target: Indexable,

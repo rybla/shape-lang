@@ -16,7 +16,7 @@ import {
   typeOfConstructor,
 } from "../../lang/syntax";
 import store from "../../app/store";
-import { List, Map } from "immutable";
+import { Map } from "immutable";
 
 const data_symbol = <span>data</span>;
 const arrow_symbol = <span>-&gt;</span>;
@@ -188,14 +188,14 @@ export default function Program() {
   return <div className="Program">{renderModule(module, Map())}</div>;
 }
 
-function intercalate<A>(list: List<A>, sep: A): List<A> {
-  return intersperseLeft(list, sep).delete(0);
+function intercalate<A>(list: A[], sep: A): A[] {
+  throw new Error();
 }
 
-function intersperseRight<A>(list: List<A>, sep: A): List<A> {
-  return list.flatMap((a) => [a, sep]);
+function intersperseRight<A>(list: A[], sep: A): A[] {
+  throw new Error();
 }
 
-function intersperseLeft<A>(list: List<A>, sep: A): List<A> {
-  return list.flatMap((a) => [sep, a]);
+function intersperseLeft<A>(list: A[], sep: A): A[] {
+  throw new Error();
 }
