@@ -8,14 +8,7 @@ export type Module = {
 
 // Statement
 
-export type Statement = TypeDefinition | DataDefinition | TermDefinition
-
-export type TypeDefinition = {
-  case: "type definition",
-  label: Label,
-  type: Type,
-  format: Format
-}
+export type Statement = DataDefinition | TermDefinition
 
 export type DataDefinition = {
   case: "data definition",

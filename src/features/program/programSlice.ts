@@ -30,7 +30,7 @@ export const programSlice = createSlice({
       replaceAt<Module, Term>(
         state.module,
         state.mode.index,
-        [],
+        new Map(),
         (target, gamma) => {
           return {
             case: "lambda",
@@ -47,7 +47,7 @@ export const programSlice = createSlice({
       replaceAt<Module, Term>(
         state.module,
         state.mode.index,
-        [],
+        new Map(),
         (target, gamma) => {
           return {
             case: "neutral",
@@ -88,7 +88,7 @@ export const programSlice = createSlice({
         lookupAt<Module, Label>(
           state.module,
           state.mode.index,
-          []
+          new Map()
         ).target
       state.mode = {
         case: "label",
