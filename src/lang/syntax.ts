@@ -20,9 +20,17 @@ export type DataDefinition = {
 export type Constructor = {
   case: "constructor",
   label: Label,
-  parameters: Parameter[],
+  domains: Type[],
   format: Format
 }
+
+export const typeOfConstructor = (dataLabel: Label, constructor: Constructor): Type => 
+  ({
+      case: "arrow",
+      domains: constructor.domains,
+      codomain: {case: "data", label: dataLabel, format: defaultFormat()},
+      format: defaultFormat()
+  })
 
 export type TermDefinition = {
   case: "term definition",
@@ -38,7 +46,7 @@ export type Type = ArrowType | DataType
 
 export type ArrowType = {
   case: "arrow",
-  parameters: Type[],
+  domains: Type[],
   codomain: Type,
   format: Format
 }
