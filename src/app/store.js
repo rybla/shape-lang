@@ -1,8 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
-import mainReducer from "../features/main/mainSlice"
+import mainSlice from "../features/main/mainSlice"
+import programSlice from "../features/program/programSlice";
 
 export default configureStore({
   reducer: {
-    app: mainReducer
+    app: mainSlice.reducer,
+    program: programSlice.reducer
   }
 })
