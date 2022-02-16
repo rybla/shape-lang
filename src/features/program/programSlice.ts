@@ -20,11 +20,11 @@ export const programSlice = createSlice({
   initialState,
   reducers: {
     // program
-    program_manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation, sub: "type definition" | "data definition" | "term definition"}>) => {},
+    program_manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation, sub: "type definition" | "data definition" | "term definition"}>) => {}, // TODO
     // data definition
-    dataDefinition_manipulateConstructors: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {},
+    dataDefinition_manipulateConstructors: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
     // block
-    block_manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {},
+    block_manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
     // term
     term_fillLambda: (state) => {
       replaceAt<Program, Term>(
@@ -58,24 +58,24 @@ export const programSlice = createSlice({
         }
       )
     },
-    term_dig: (state) => {},
-    term_apply: (state, action: PayloadAction<{applicant: Label, argCount: number, i: number}>) => {},
+    term_dig: (state) => {}, // TODO
+    term_apply: (state, action: PayloadAction<{applicant: Label, argCount: number, i: number}>) => {}, // TODO
     // parameter
-    parameters_manipulate: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {},
+    parameters_manipulate: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
     // label
-    label_append: (state, action: PayloadAction<string>) => {},
-    label_backspace: (state) => {},
+    label_append: (state, action: PayloadAction<string>) => {}, // TODO
+    label_backspace: (state) => {}, // TODO
     // format
-    format_toggleIndented: (state) => {},
-    format_toggleUnannotated: (state) => {},
+    format_toggleIndented: (state) => {}, // TODO
+    format_toggleUnannotated: (state) => {}, // TODO
     // navigation
-    navigation_up: (state) => {},
-    navigation_down: (state) => {},
-    navigation_left: (state) => {},
-    navigation_right: (state) => {},
-    navigation_next: (state) => {},
-    navigation_previous: (state) => {},
-    navigation_top: (state) => {},
+    navigation_up: (state) => {}, // TODO
+    navigation_down: (state) => {}, // TODO
+    navigation_left: (state) => {}, // TODO
+    navigation_right: (state) => {}, // TODO
+    navigation_next: (state) => {}, // TODO
+    navigation_previous: (state) => {}, // TODO
+    navigation_top: (state) => {}, // TODO
     // mode
     mode_edit: (state) => {
       state.mode = {
