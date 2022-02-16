@@ -5,11 +5,13 @@ import {
   Binding,
   Block,
   Constructor,
+  Context,
   Mode,
   Module,
   Statement,
   Term,
   Type,
+  typeOfConstructor,
 } from "../../lang/syntax";
 import store from "../../app/store";
 
@@ -18,21 +20,49 @@ export default function Program() {
   const mode = useSelector<ProgramState, Mode>((state) => state.mode);
   const dispatch = useDispatch<typeof store.dispatch>();
 
-  function renderModule(module: Module): JSX.Element {}
+  function renderModule(module: Module, gamma: Context): JSX.Element {
+    module.statements.forEach((statement) => {
+      switch (statement.case) {
+        case "data definition": {
+          statement.constructors.forEach((constructor) => {
+            gamma.set(
+              constructor.label,
+              typeOfConstructor(statement.label, constructor)
+            );
+          });
+          break;
+        }
+        case "term definition": {
+          gamma.set(statement.label, statement.type);
+          break;
+        }
+      }
+    });
+    return (
+      <div className="module">
+        {module.statements.map((statement) =>
+          renderStatement(statement, gamma)
+        )}
+      </div>
+    );
+  }
 
-  function renderStatement(statement: Statement): JSX.Element {}
+  function renderStatement(statement: Statement, gamma: Context): JSX.Element {}
 
-  function renderConstructor(constructor: Constructor): JSX.Element {}
+  function renderConstructor(
+    constructor: Constructor,
+    gamma: Context
+  ): JSX.Element {}
 
-  function renderBlock(block: Block): JSX.Element {}
+  function renderBlock(block: Block, gamma: Context): JSX.Element {}
 
-  function renderBinding(binding: Binding): JSX.Element {}
+  function renderBinding(binding: Binding, gamma: Context): JSX.Element {}
 
-  function renderType(type: Type): JSX.Element {}
+  function renderType(type: Type, gamma: Context): JSX.Element {}
 
-  function renderTerm(term: Term): JSX.Element {}
+  function renderTerm(term: Term, gamma: Context): JSX.Element {}
 
-  function renderLabel(term: Term): JSX.Element {}
+  function renderLabel(term: Term, gamma: Context): JSX.Element {}
 
   return <div className="Program">{renderModule(module)}</div>;
 }
