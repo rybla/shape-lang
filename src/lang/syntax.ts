@@ -140,11 +140,11 @@ export function freshBlock(): Block {
   }
 }
 
-export function freshParameter(): Parameter {
+export function freshParameter(domain: Type): Parameter {
   return {
     case: "parameter",
     label: freshLabel(),
-    domain: freshHole(),
+    domain,
     format: defaultFormat()
   }
 }
