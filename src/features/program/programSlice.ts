@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Map } from "immutable";
 import { defaultFormat, freshBlock, freshHole, freshParameter, Label, lookupAt, Mode, Module, replaceAt, Term } from "../../lang/syntax";
 
 export type ProgramState = {
@@ -30,7 +31,7 @@ export const programSlice = createSlice({
       replaceAt<Module, Term>(
         state.module,
         state.mode.index,
-        new Map(),
+        Map(),
         (target, gamma) => {
           return {
             case: "lambda",
@@ -47,7 +48,7 @@ export const programSlice = createSlice({
       replaceAt<Module, Term>(
         state.module,
         state.mode.index,
-        new Map(),
+        Map(),
         (target, gamma) => {
           return {
             case: "neutral",
@@ -88,7 +89,7 @@ export const programSlice = createSlice({
         lookupAt<Module, Label>(
           state.module,
           state.mode.index,
-          new Map()
+          Map()
         ).target
       state.mode = {
         case: "label",
