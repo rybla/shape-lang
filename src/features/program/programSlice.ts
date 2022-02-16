@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Block, DeBruijn, defaultFormat, freshBlock, freshHole, freshLabel, freshParameter, Label, lookupAt, Mode, replaceAt, Term } from "../../lang/syntax";
+import { Block, defaultFormat, freshBlock, freshHole, freshLabel, freshParameter, Label, lookupAt, Mode, replaceAt, Term, TermDefinition } from "../../lang/syntax";
 
 interface ProgramState {
   block: Block,
@@ -20,40 +20,13 @@ export const programSlice = createSlice({
   name: "program",
   initialState,
   reducers: {
+    // program
+    program_manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation, sub: "type definition" | "data definition" | "term definition"}>) => {},
+    // data definition
+    dataDefinition_manipulateConstructors: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {},
     // block
-    block_insertBinding: (state) => {},
-    block_deleteBinding: (state) => {},
-    block_moveBinding: (state, action: PayloadAction<number>) => {},
+    block_manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {},
     // term
-    term_fillUniverse: (state) => {
-      replaceAt<Block, Term>(
-        state.block,
-        state.mode.index,
-        [],
-        (target, gamma) => {
-          return {
-            case: "universe",
-            level: 0,
-            format: target.format
-          }
-        }
-      )
-    },
-    term_fillPi: (state) => {
-      replaceAt<Block, Term>(
-        state.block,
-        state.mode.index,
-        [],
-        (target, gamma) => {
-          return {
-            case: "pi",
-            parameters: [freshParameter()],
-            codomain: freshBlock(),
-            format: defaultFormat()
-          }
-        }
-      )
-    },
     term_fillLambda: (state) => {
       replaceAt<Block, Term>(
         state.block,
@@ -69,7 +42,9 @@ export const programSlice = createSlice({
         }
       )
     },
-    term_fillNeutral: (state, action: PayloadAction<DeBruijn>) => {
+    term_fillNeutral: (state, action: PayloadAction<{label: Label, argCount: number}>) => {
+      let args: Term[] = [];
+      for (let i = 0; i < action.payload.argCount; i++) args.push(freshHole())
       replaceAt<Block, Term>(
         state.block,
         state.mode.index,
@@ -77,19 +52,17 @@ export const programSlice = createSlice({
         (target, gamma) => {
           return {
             case: "neutral",
-            applicant: action.payload,
-            arguments: [], // TODO: calculate via type of applicant
+            applicant: action.payload.label,
+            args,
             format: defaultFormat()
           }
         }
       )
     },
     term_dig: (state) => {},
-    term_apply: (state, action: PayloadAction<DeBruijn>) => {},
+    term_apply: (state, action: PayloadAction<{applicant: Label, argCount: number, i: number}>) => {},
     // parameter
-    parameter_insertParameter: (state) => {},
-    parameter_deleteParameter: (state) => {},
-    parameter_moveParameter: (state, action: PayloadAction<[number, number]>) => {},
+    parameters_manipulate: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {},
     // label
     label_append: (state, action: PayloadAction<string>) => {},
     label_backspace: (state) => {},
@@ -122,6 +95,9 @@ export const programSlice = createSlice({
   }
 })
 
-export const {block_insertBinding, block_deleteBinding, block_moveBinding, term_fillUniverse, term_fillPi, term_fillNeutral, term_dig, term_apply, parameter_insertParameter, parameter_deleteParameter, parameter_moveParameter, label_append, format_toggleIndented, format_toggleUnannotated, navigation_up, navigation_down, navigation_left, navigation_right, navigation_next, navigation_previous, navigation_top, mode_edit, mode_label} = programSlice.actions
+export type ArrayManipulation =
+  | {case: "insert", i: number}
+  | {case: "delete", i: number}
+  | {case: "move", i: number, j: number}
 
 export default programSlice.reducer
