@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Map } from "immutable";
-import { defaultFormat, freshBlock, freshHole, freshParameter, Label, lookupAt, Mode, Module, replaceAt, Term } from "../../lang/syntax";
+import { List, Map } from "immutable";
+import { defaultFormat, freshBlock, freshHole, Label, lookupAt, Mode, Module, replaceAt, Term } from "../../lang/syntax";
 
 export type ProgramState = {
   module: Module,
@@ -10,10 +10,10 @@ export type ProgramState = {
 const initialState: ProgramState = {
   module: {
     case: "module",
-    statements: [],
+    statements: List(),
     format: defaultFormat()
   },
-  mode: {case: "edit", index: []}
+  mode: {case: "edit", index: List()}
 }
 
 export const programSlice = createSlice({
@@ -35,7 +35,7 @@ export const programSlice = createSlice({
         (target, gamma) => {
           return {
             case: "lambda",
-            parameters: [freshParameter()],
+            parameters: List(),
             body: freshBlock(),
             format: defaultFormat()
           }
