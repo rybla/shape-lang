@@ -1,35 +1,60 @@
+// Program
+
 export type Program = {
   case: "program",
-  statement: Statement[]
+  statements: Statement[],
+  format: Format
 }
+
+// Statement
 
 export type Statement = TypeDefinition | DataDefinition | TermDefinition
 
 export type TypeDefinition = {
   case: "type definition",
   label: Label,
-  type: Type
+  type: Type,
+  format: Format
 }
 
 export type DataDefinition = {
   case: "data definition",
   label: Label,
-  constructors: Constructor[]
+  constructors: Constructor[],
+  format: Format
 }
 
-export type Constructor =
-  | {case: "constructor", label: Label, parameters: Parameter[]}
+export type Constructor = {
+  case: "constructor",
+  label: Label,
+  parameters: Parameter[],
+  format: Format
+}
 
 export type TermDefinition = {
   case: "term definition",
   label: Label,
   type: Type,
-  block: Term
+  block: Term,
+  format: Format
 }
 
-export type Type =
-  | {case: "arrow", parameters: Type[], codomain: Type}
-  | {case: "data", label: Label}
+// Type
+
+export type Type = ArrowType | DataType
+
+export type ArrowType = {
+  case: "arrow",
+  parameters: Type[],
+  codomain: Type,
+  format: Format
+}
+
+export type DataType = {
+  case: "data",
+  label: Label,
+  format: Format
+}
 
 export type Block = {
   case: "block",
@@ -42,8 +67,11 @@ export type Binding = {
   case: "binding",
   label: Label,
   signature: Term,
-  value: Term
+  value: Term,
+  format: Format
 }
+
+// Term
 
 export type Term = Lambda | Neutral | Hole
 

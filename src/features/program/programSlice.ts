@@ -1,16 +1,15 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Block, defaultFormat, freshBlock, freshHole, freshLabel, freshParameter, Label, lookupAt, Mode, replaceAt, Term, TermDefinition } from "../../lang/syntax";
+import { defaultFormat, freshBlock, freshHole, freshParameter, Label, lookupAt, Mode, Program, replaceAt, Term } from "../../lang/syntax";
 
 interface ProgramState {
-  block: Block,
+  program: Program,
   mode: Mode
 }
 
 const initialState: ProgramState = {
-  block: {
-    case: "block",
-    bindings: [],
-    body: freshHole(),
+  program: {
+    case: "program",
+    statements: [],
     format: defaultFormat()
   },
   mode: {case: "edit", index: []}
@@ -28,8 +27,8 @@ export const programSlice = createSlice({
     block_manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {},
     // term
     term_fillLambda: (state) => {
-      replaceAt<Block, Term>(
-        state.block,
+      replaceAt<Program, Term>(
+        state.program,
         state.mode.index,
         [],
         (target, gamma) => {
@@ -45,8 +44,8 @@ export const programSlice = createSlice({
     term_fillNeutral: (state, action: PayloadAction<{label: Label, argCount: number}>) => {
       let args: Term[] = [];
       for (let i = 0; i < action.payload.argCount; i++) args.push(freshHole())
-      replaceAt<Block, Term>(
-        state.block,
+      replaceAt<Program, Term>(
+        state.program,
         state.mode.index,
         [],
         (target, gamma) => {
@@ -85,7 +84,12 @@ export const programSlice = createSlice({
       }
     },
     mode_label: (state) => {
-      let label = lookupAt<Block, Label>(state.block, state.mode.index, []).target
+      let label =
+        lookupAt<Program, Label>(
+          state.program,
+          state.mode.index,
+          []
+        ).target
       state.mode = {
         case: "label",
         index: state.mode.index,
