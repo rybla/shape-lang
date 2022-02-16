@@ -183,7 +183,7 @@ export function replaceAt<S extends Indexable, T extends Indexable>(source: S, i
 }
 
 // The kinds of things you can index
-export type Indexable = Program | Statement | Constructor | Block | Binding | Term | Parameter | Label
+export type Indexable = Module | Statement | Constructor | Block | Binding | Term | Parameter | Label
 
 export type Index = IndexItem[]
 
@@ -194,7 +194,7 @@ export type IndexItem = {
 
 export type IndexStep =
   | {
-      case: "program",
+      case: "module",
       sub: {case: "statement", i: number}
     }
   | {
