@@ -1,8 +1,10 @@
 // Module
 
+import { List, Map } from "immutable"
+
 export type Module = {
   case: "module",
-  statements: Statement[],
+  statements: List<Statement>,
   format: Format
 }
 
@@ -13,14 +15,14 @@ export type Statement = DataDefinition | TermDefinition
 export type DataDefinition = {
   case: "data definition",
   label: Label,
-  constructors: Constructor[],
+  constructors: List<Constructor>,
   format: Format
 }
 
 export type Constructor = {
   case: "constructor",
   label: Label,
-  domains: Type[],
+  domains: List<Type>,
   format: Format
 }
 
@@ -46,7 +48,7 @@ export type Type = ArrowType | DataType
 
 export type ArrowType = {
   case: "arrow",
-  domains: Type[],
+  domains: List<Type>,
   codomain: Type,
   format: Format
 }
@@ -61,7 +63,7 @@ export type DataType = {
 
 export type Block = {
   case: "block",
-  bindings: Binding[],
+  bindings: List<Binding>,
   body: Term,
   format: Format
 }
@@ -69,8 +71,8 @@ export type Block = {
 export type Binding = {
   case: "binding",
   label: Label,
-  signature: Term,
-  value: Term,
+  type: Type,
+  term: Term,
   format: Format
 }
 
@@ -80,7 +82,7 @@ export type Term = Lambda | Neutral | Hole
 
 export type Lambda = {
   case: "lambda",
-  parameters: Parameter[],
+  parameters: List<Parameter>,
   body: Block,
   format: Format
 }
@@ -95,14 +97,14 @@ export type Parameter = {
 export type Neutral = {
   case: "neutral",
   applicant: Label,
-  args: Term[],
+  args: List<Term>,
   format: Format
 }
 
 export type Hole = {
   case: "hole",
   holeId: Symbol,
-  weakening: Label[],
+  weakening: List<Label>,
   substitution: Substitution<Label, Term>,
   format: Format
 }
@@ -122,8 +124,8 @@ export function freshHole(): Hole {
   return {
     case: "hole",
     holeId,
-    weakening: [],
-    substitution: [],
+    weakening: List(),
+    substitution: List(),
     format: defaultFormat()
   }
 }
@@ -132,7 +134,7 @@ export function freshHole(): Hole {
 export function freshBlock(): Block {
   return {
     case: "block",
-    bindings: [],
+    bindings: List(),
     body: freshHole(),
     format: defaultFormat()
   }
@@ -164,7 +166,7 @@ export type Context = Map<Label, Type>
 
 // Substitution
 
-export type Substitution<A, B> = SubstitutionItem<A, B>[]
+export type Substitution<A, B> = List<SubstitutionItem<A, B>>
 export type SubstitutionItem<A, B> = {
   key: A,
   value: B
@@ -187,7 +189,7 @@ export function replaceAt<S extends Indexable, T extends Indexable>(source: S, i
 // The kinds of things you can index
 export type Indexable = Module | Statement | Constructor | Block | Binding | Term | Parameter | Label
 
-export type Index = IndexItem[]
+export type Index = List<IndexItem>
 
 export type IndexItem = {
   target: Indexable,
@@ -221,7 +223,7 @@ export type IndexStep =
     }
   | {
       case: "binding",
-      sub: {case: "label"} | {case: "signature"} | {case: "value"},
+      sub: {case: "label"} | {case: "type"} | {case: "term"},
     }
   | {
       case: "pi",
