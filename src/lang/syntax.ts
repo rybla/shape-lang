@@ -56,6 +56,8 @@ export type DataType = {
   format: Format
 }
 
+// Block
+
 export type Block = {
   case: "block",
   bindings: Binding[],
@@ -104,7 +106,11 @@ export type Hole = {
   format: Format
 }
 
+// Label
+
 export type Label = {case: "label", value: string}
+
+// Fresh
 
 export function freshLabel(): Label {
   return {case: "label", value: ""}
