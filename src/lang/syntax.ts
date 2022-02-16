@@ -159,12 +159,7 @@ export function defaultFormat(): Format {
 
 // Context
 
-export type Context = ContextItem[]
-export type ContextItem = {
-  label: Label,
-  signature: Term,
-  value: Term | undefined
-}
+export type Context = Map<Label, Type>
 
 // Substitution
 
