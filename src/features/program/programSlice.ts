@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Map } from "immutable";
-import { Context, defaultFormat, freshBlock, freshHole, Index, Indexable, Label, Mode, Module, Term } from "../../lang/syntax";
+import { Binding, Block, Context, defaultFormat, freshBlock, freshHole, freshLabel, Index, Indexable, Label, Mode, Module, Term, Type } from "../../lang/syntax";
 
 export type ProgramState = {
   module: Module,
+  focus: Index,
   mode: Mode
 }
 
@@ -13,7 +14,8 @@ const initialState: ProgramState = {
     statements: [],
     format: defaultFormat()
   },
-  mode: {case: "edit", index: []}
+  focus: [],
+  mode: {case: "edit"}
 }
 
 export const programSlice = createSlice({
@@ -21,16 +23,37 @@ export const programSlice = createSlice({
   initialState,
   reducers: {
     // module
-    module_manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation, sub: "type definition" | "data definition" | "term definition"}>) => {}, // TODO
+    manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>, case: "data definition" | "term definition"}>) => {}, // TODO
     // data definition
-    dataDefinition_manipulateConstructors: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
+    manipulateConstructors: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>}>) => {}, // TODO
+    // constructor
+    manipulateDomains: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>}>) => {}, // TODO
     // block
-    block_manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
+    manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>}>) => {
+      let block = lookupAt<Module, Block>(state.module, state.focus, Map()).target
+      switch (action.payload.manipulation.case) {
+        case "insert": {
+          let binding: Binding = {
+            case: "binding",
+            label: freshLabel(),
+            type: action.payload.manipulation.data,
+            term: freshHole(),
+            format: defaultFormat()
+          }
+          block.bindings.splice(action.payload.manipulation.i, 0, binding)
+          break;
+        }
+        case "delete": {
+          block.bindings.splice(action.payload.manipulation.i, 1)
+          break;
+        }
+      }
+    },
     // term
-    term_fillLambda: (state) => {
+    fillLambda: (state) => {
       replaceAt<Module, Term>(
         state.module,
-        state.mode.index,
+        state.focus,
         Map(),
         (target, gamma) => ({
             case: "lambda",
@@ -40,66 +63,67 @@ export const programSlice = createSlice({
         })
       )
     },
-    term_fillNeutral: (state, action: PayloadAction<{label: Label, argCount: number}>) => {
+    fillNeutral: (state, action: PayloadAction<{label: Label, argCount: number}>) => {
       let args: Term[] = [];
       for (let i = 0; i < action.payload.argCount; i++) args.push(freshHole())
       replaceAt<Module, Term>(
         state.module,
-        state.mode.index,
+        state.focus,
         Map(),
-        (target, gamma) => {
-          return {
-            case: "neutral",
-            applicant: action.payload.label,
-            args,
-            format: defaultFormat()
-          }
-        }
+        (target, gamma) => ({
+          case: "neutral",
+          applicant: action.payload.label,
+          args,
+          format: defaultFormat()
+        })
       )
     },
-    term_dig: (state) => {}, // TODO
-    term_apply: (state, action: PayloadAction<{applicant: Label, argCount: number, i: number}>) => {}, // TODO
+    dig: (state) => {
+      replaceAt<Module, Term>(
+        state.module,
+        state.focus,
+        Map(),
+        (target, gamma) => freshHole()
+      )
+    },
+    apply: (state, action: PayloadAction<{applicant: Label, argCount: number, i: number}>) => {}, // TODO
     // parameter
-    parameters_manipulate: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
+    manipulateParameters: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>}>) => {}, // TODO
     // label
-    label_append: (state, action: PayloadAction<string>) => {}, // TODO
-    label_backspace: (state) => {}, // TODO
+    appendLabel: (state, action: PayloadAction<string>) => {}, // TODO
+    backspaceLabel: (state) => {}, // TODO
     // format
-    format_toggleIndented: (state) => {}, // TODO
-    format_toggleUnannotated: (state) => {}, // TODO
+    toggleIndented: (state) => {}, // TODO
+    toggleUnannotated: (state) => {}, // TODO
     // navigation
-    navigation_up: (state) => {}, // TODO
-    navigation_down: (state) => {}, // TODO
-    navigation_left: (state) => {}, // TODO
-    navigation_right: (state) => {}, // TODO
-    navigation_next: (state) => {}, // TODO
-    navigation_previous: (state) => {}, // TODO
-    navigation_top: (state) => {}, // TODO
+    moveFocus: (state, action: PayloadAction<NavigationDirection>) => {
+      state.focus = moveIndex(state.module, state.focus, action.payload)
+    }, // TODO
     // mode
-    mode_edit: (state) => {
+    editMode: (state) => {
       state.mode = {
-        case: "edit",
-        index: state.mode.index 
+        case: "edit"
       }
     },
-    mode_label: (state) => {
+    labelMode: (state) => {
       let label =
         lookupAt<Module, Label>(
           state.module,
-          state.mode.index,
+          state.focus,
           Map()
         ).target
       state.mode = {
         case: "label",
-        index: state.mode.index,
         label
       }
     },
   }
 })
 
-export type ArrayManipulation =
-  | {case: "insert", i: number}
+export type NavigationDirection = "up" | "down" | "left" | "right" | "next" | "previous" | "top"
+
+export type ArrayManipulation<A> =
+  | {case: "insert", i: number, data: A}
   | {case: "delete", i: number}
   | {case: "move", i: number, j: number}
 
@@ -108,6 +132,10 @@ export function lookupAt<S extends Indexable, T extends Indexable>(source: S, in
 }
 
 export function replaceAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context, replace: (target: T, gamma: Context) => T): S {
+  throw new Error("unimplemented")
+}
+
+export function moveIndex(module: Module, index: Index, direction: NavigationDirection): Index {
   throw new Error("unimplemented")
 }
 
