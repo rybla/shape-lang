@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { defaultFormat, freshBlock, freshHole, freshParameter, Label, lookupAt, Mode, Module, replaceAt, Term } from "../../lang/syntax";
 
-interface ProgramState {
+export type ProgramState = {
   module: Module,
   mode: Mode
 }
