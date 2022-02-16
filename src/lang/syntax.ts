@@ -1,7 +1,7 @@
-// Program
+// Module
 
-export type Program = {
-  case: "program",
+export type Module = {
+  case: "module",
   statements: Statement[],
   format: Format
 }

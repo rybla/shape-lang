@@ -1,14 +1,14 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { defaultFormat, freshBlock, freshHole, freshParameter, Label, lookupAt, Mode, Program, replaceAt, Term } from "../../lang/syntax";
+import { defaultFormat, freshBlock, freshHole, freshParameter, Label, lookupAt, Mode, Module, replaceAt, Term } from "../../lang/syntax";
 
 interface ProgramState {
-  program: Program,
+  module: Module,
   mode: Mode
 }
 
 const initialState: ProgramState = {
-  program: {
-    case: "program",
+  module: {
+    case: "module",
     statements: [],
     format: defaultFormat()
   },
@@ -19,16 +19,16 @@ export const programSlice = createSlice({
   name: "program",
   initialState,
   reducers: {
-    // program
-    program_manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation, sub: "type definition" | "data definition" | "term definition"}>) => {}, // TODO
+    // module
+    module_manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation, sub: "type definition" | "data definition" | "term definition"}>) => {}, // TODO
     // data definition
     dataDefinition_manipulateConstructors: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
     // block
     block_manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
     // term
     term_fillLambda: (state) => {
-      replaceAt<Program, Term>(
-        state.program,
+      replaceAt<Module, Term>(
+        state.module,
         state.mode.index,
         [],
         (target, gamma) => {
@@ -44,8 +44,8 @@ export const programSlice = createSlice({
     term_fillNeutral: (state, action: PayloadAction<{label: Label, argCount: number}>) => {
       let args: Term[] = [];
       for (let i = 0; i < action.payload.argCount; i++) args.push(freshHole())
-      replaceAt<Program, Term>(
-        state.program,
+      replaceAt<Module, Term>(
+        state.module,
         state.mode.index,
         [],
         (target, gamma) => {
@@ -85,8 +85,8 @@ export const programSlice = createSlice({
     },
     mode_label: (state) => {
       let label =
-        lookupAt<Program, Label>(
-          state.program,
+        lookupAt<Module, Label>(
+          state.module,
           state.mode.index,
           []
         ).target
@@ -104,4 +104,4 @@ export type ArrayManipulation =
   | {case: "delete", i: number}
   | {case: "move", i: number, j: number}
 
-export default programSlice.reducer
+export default programSlice
