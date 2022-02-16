@@ -90,7 +90,7 @@ export type Lambda = {
 export type Parameter = {
   case: "parameter",
   label: Label,
-  domain: Term,
+  domain: Type,
   format: Format
 }
 
