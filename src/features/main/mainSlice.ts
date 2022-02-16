@@ -13,6 +13,4 @@ export const mainSlice = createSlice({
   }
 })
 
-export const { testAction } = mainSlice.actions
-
-export default mainSlice.reducer
+export default mainSlice
