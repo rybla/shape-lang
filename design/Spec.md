@@ -10,7 +10,7 @@ But this short file just lists what the transformations are.
     - remove a definition
     - reorder definitions by moving a single definition to a different location.
 - filling a hole
-    - select something in scope, or U, Pi, lam.
+    - lambda, neutral.
 - applying a function around a value
     - user indicates an argument term v (perhaps by putting their cursor to the left of it?)
       and selects a function f to be applied from a list (perhaps including Pi)
