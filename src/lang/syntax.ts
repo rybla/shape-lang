@@ -1,18 +1,18 @@
 export type Program = {
   case: "program",
-  definition: Definition[]
+  statement: Statement[]
 }
 
-export type Definition = TypeDefinition | DataDefinition | TermDefinition
+export type Statement = TypeDefinition | DataDefinition | TermDefinition
 
 export type TypeDefinition = {
-  case: "define type",
+  case: "type definition",
   label: Label,
   type: Type
 }
 
 export type DataDefinition = {
-  case: "define data",
+  case: "data definition",
   label: Label,
   constructors: Constructor[]
 }
@@ -21,7 +21,7 @@ export type Constructor =
   | {case: "constructor", label: Label, parameters: Parameter[]}
 
 export type TermDefinition = {
-  case: "define term",
+  case: "term definition",
   label: Label,
   type: Type,
   block: Term
@@ -64,7 +64,7 @@ export type Parameter = {
 export type Neutral = {
   case: "neutral",
   applicant: Label,
-  arguments: Term[],
+  args: Term[],
   format: Format
 }
 
@@ -155,7 +155,7 @@ export function replaceAt<S extends Indexable, T extends Indexable>(source: S, i
 }
 
 // The kinds of things you can index
-export type Indexable = Program | Definition | Constructor | Block | Binding | Term | Parameter | Label
+export type Indexable = Program | Statement | Constructor | Block | Binding | Term | Parameter | Label
 
 export type Index = IndexItem[]
 
@@ -167,7 +167,7 @@ export type IndexItem = {
 export type IndexStep =
   | {
       case: "program",
-      sub: {case: "definition", i: number}
+      sub: {case: "statement", i: number}
     }
   | {
       case: "type definition",
