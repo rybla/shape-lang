@@ -175,18 +175,13 @@ export type SubstitutionItem<A, B> = {
 // Mode
 
 export type Mode = 
-  | {case: "edit", index: Index}
-  | {case: "label", index: Index, label: Label}
+  | {case: "edit"}
+  | {case: "label", label: Label}
 
 // The kinds of things you can index
 export type Indexable = Module | Statement | Constructor | Block | Binding | Term | Parameter | Label
 
-export type Index = IndexItem[]
-
-export type IndexItem = {
-  target: Indexable,
-  step: IndexStep
-}
+export type Index = IndexStep[]
 
 export type IndexStep =
   | {
