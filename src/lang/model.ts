@@ -14,8 +14,8 @@ export function removeBinding(module: Module, index: ModuleIndex): Module {throw
 export function insertDomain(
   module: Module,
   parentIndex: ModuleIndex,
-  domain: Type,
-  domainIndex: TypeIndex
+  domainIndex: TypeIndex,
+  domain: Type
 ): Module {throw new Error()}
 
 // Remove the domain at `domainIndex` relative to the top of the type of the
