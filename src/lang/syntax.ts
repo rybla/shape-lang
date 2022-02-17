@@ -49,7 +49,7 @@ export type Type = ArrowType | DataType | HoleType
 export type ArrowType = {
   case: "arrow",
   domains: Type[],
-  codomain: Type
+  codomain: DataType | HoleType
 }
 
 export type DataType = {
@@ -249,7 +249,7 @@ export type ArrowTypeIndex =
     case: "arrow",
     sub:
       | {case: "domain", i: number, index: TypeIndex} 
-      | {case: "codomain", index: TypeIndex}
+      | {case: "codomain", index: DataTypeIndex | HereIndex}
   }
 export type DataTypeIndex =
   {
