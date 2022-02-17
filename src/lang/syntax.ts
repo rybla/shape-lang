@@ -44,7 +44,7 @@ export type TermDefinition = {
 
 // Type
 
-export type Type = ArrowType | DataType
+export type Type = ArrowType | DataType | HoleType
 
 export type ArrowType = {
   case: "arrow",
@@ -56,6 +56,12 @@ export type ArrowType = {
 export type DataType = {
   case: "data",
   label: Label,
+  format: Format
+}
+
+export type HoleType = {
+  case: "hole",
+  holeId: Symbol,
   format: Format
 }
 
@@ -181,51 +187,83 @@ export type Mode =
 // The kinds of things you can index
 export type Indexable = Module | Statement | Constructor | Block | Binding | Term | Parameter | Label
 
-export type Index = IndexStep[]
+// export type Index = IndexStep[]
 
-export type IndexStep =
-  | {
-      case: "module",
-      sub: {case: "statement", i: number}
-    }
+export type ModuleIndex =
+  {case: "module", i: number, index: StatementIndex}
+
+export type StatementIndex =
   | {
       case: "type definition",
-      sub: {case: "label"} | {case: "type"}
+      sub:
+        | {case: "label"}
+        | {case: "type", index: TypeIndex}
     }
   | {
       case: "data definition",
-      sub: {case: "label"} | {case: "constructor", i: number}
+      sub:
+        | {case: "label"}
+        | {case: "constructor", i: number, index: ConstructorIndex}
+    }
+
+export type ConstructorIndex =
+  {
+    case: "constructor", 
+    sub: 
+      | {case: "label"}
+      | {case: "domain", i: number, index: TypeIndex}
+  }
+
+export type TypeIndex = 
+  | {
+      case: "arrow",
+      sub:
+        | {case: "domain", i: number, index: TypeIndex} 
+        | {case: "codomain", index: TypeIndex}
     }
   | {
-      case: "constructor",
-      sub: {case: "label"} | {case: "paramater", i: number}
+      case: "data",
+      sub:
+        | {case: "label"}
     }
-  | {
-      case: "term definition",
-      sub: {case: "label"} | {case: "type"} | {case: "block"}
-    }
-  | {
-      case: "block",
-      sub: {case: "binding", i: number} | {case: "body"},
-    }
-  | {
-      case: "binding",
-      sub: {case: "label"} | {case: "type"} | {case: "term"},
-    }
-  | {
-      case: "pi",
-      sub: {case: "parameter", i: number} | {case: "codomain"}
-    }
+
+export type BlockIndex =
+  {
+    case: "block",
+    sub:
+      | {case: "binding", i: number, index: BindingIndex}
+      | {case: "body", index: TermIndex}
+  }
+
+export type BindingIndex = 
+  {
+    case: "binding",
+    sub:
+      | {case: "label"}
+      | {case: "type", index: TypeIndex}
+      | {case: "term", index: TermIndex}
+  }
+
+export type TermIndex = 
   | {
       case: "lambda",
-      sub: {case: "parameter", i: number} | {case: "body"}
-    }
-  | {
-      case: "parameter",
-      sub: {case: "label"} | {case: "signature"}
+      sub:
+        | {case: "parameter", i: number, index: ParameterIndex}
+        | {case: "body", index: TermIndex}
     }
   | {
       case: "neutral",
-      sub: {case: "applicant"} | {case: "argument", i: number},
+      sub:
+        | {case: "applicant"}
+        | {case: "argument", i: number, index: TermIndex}
     }
 
+export type ParameterIndex =
+  {
+    case: "parameter", 
+    sub:
+      | {case: "label"}
+      | {case: "domain", index: TypeIndex}
+  }
+
+  
