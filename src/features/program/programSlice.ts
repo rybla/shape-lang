@@ -1,7 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Map } from "immutable";
 import { removeBinding, removeConstructor, removeDomain, removeStatement } from "../../lang/model";
-import { Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHole, freshHoleType, freshLabel, Index, Indexable, Label, Lambda, lookupAt, Mode, Module, Parameter, replaceAt, Statement, Term, Type } from "../../lang/syntax";
+import { Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHole, freshHoleType, freshLabel, Index, Indexable, Label, Lambda, lookupAt, Mode, Module, Parameter, replaceAt, Statement, Term, TermDefinition, Type } from "../../lang/syntax";
+
+export default programSlice
+
+// programSlice
 
 export type ProgramState = {
   module: Module,
@@ -19,93 +23,64 @@ const initialState: ProgramState = {
   mode: {case: "edit"}
 }
 
-// function applyArrayManipulation<A>(manipulation: ArrayManipulation, make: () => A, remove: () => void)
-
 export const programSlice = createSlice({
   name: "program",
   initialState,
   reducers: {
     // module
     manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation, case: "data definition" | "term definition"}>) => {
-      switch (action.payload.manipulation.case) {
-        case "insert": {
-          let statement: Statement;
-          switch (action.payload.case) {
-            case "data definition": {
-              statement = {
-                case: "data definition",
-                label: freshLabel(),
-                constructors: [],
-                format: defaultFormat()
-              }
-              break
+      applyArrayManipulation(
+        state,
+        state.module.statements,
+        action.payload.manipulation,
+        {
+          make: (m) => {
+            switch (action.payload.case) {
+              case "data definition": return {case: "data definition", label: freshLabel(), constructors: [], format: defaultFormat() } as DataDefinition
+              case "term definition": return { case: "term definition", label: freshLabel(), type: freshHoleType(), block: freshBlock(), format: defaultFormat()} as TermDefinition
             }
-            case "term definition": {
-              statement = {
-                case: "term definition",
-                label: freshLabel(),
-                type: freshHoleType(),
-                block: freshBlock(),
-                format: defaultFormat()
-              }
-              break
-            }
-          }
-          state.module.statements.splice(action.payload.manipulation.i, 0, statement)
-          break
+          },
+          remove: (m) => {
+            state.module = removeStatement(state.module, state.focus)
+            state.focus = moveIndex(state.module, state.focus, "up")
+          },
+          move: (m) => {throw new Error()}
         }
-        case "remove": {
-          state.module = removeStatement(state.module, state.focus)
-          break
-        }
-        case "move": {throw new Error()}
-      }
+      )
     },
     // data definition
     manipulateConstructors: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {
-      switch (action.payload.manipulation.case) {
-        case "insert": {
-          let constructor: Constructor = {
-            case: "constructor",
-            label: freshLabel(),
-            domains: [],
-            format: defaultFormat()
-          }
-          let dataDefinition: DataDefinition = lookupAt<Module, DataDefinition>(state.module, state.focus, Map()).target
-          dataDefinition.constructors.splice(action.payload.manipulation.i, 0, constructor)
-          break
-        }
-        case "remove": {
-          state.module = removeConstructor(state.module, state.focus)
-          state.focus = moveIndex(state.module, state.focus, "up")
-          break
-        }
-        case "move": {throw new Error()}
-      }
+      applyArrayManipulation(
+        state,
+        lookupAt<Module, DataDefinition>(state.module, state.focus, Map()).target.constructors,
+        action.payload.manipulation,
+        {
+          make: (m) => ({case: "constructor", label: freshLabel(), domains: [], format: defaultFormat()} as Constructor),
+          remove: (m) => {
+            state.module = removeConstructor(state.module, state.focus)
+            state.focus = moveIndex(state.module, state.focus, "up")
+          },
+          move: (m) => {throw new Error()}
+        },
+      )
     },
     // constructor
     manipulateDomains: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
     // block
     manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {
-      let block = lookupAt<Module, Block>(state.module, state.focus, Map()).target
-      switch (action.payload.manipulation.case) {
-        case "insert": {
-          let binding: Binding = {
-            case: "binding",
-            label: freshLabel(),
-            type: freshHoleType(),
-            term: freshHole(),
-            format: defaultFormat()
-          }
-          block.bindings.splice(action.payload.manipulation.i, 0, binding)
-          break
+      applyArrayManipulation(
+        state,
+        lookupAt<Module, Block>(state.module, state.focus, Map()).target.bindings,
+        action.payload.manipulation,
+        {
+          make: (m) => ({case: "binding", label: freshLabel(), type: freshHoleType(), term: freshHole(), format: defaultFormat()} as Binding),
+          remove: (m) => {
+            state.module = removeBinding(state.module, state.focus)
+            state.focus = moveIndex(state.module, state.focus, "up")
+          },
+          move: (m) => {throw new Error()}
         }
-        case "remove": {
-          state.module = removeBinding(state.module, state.focus)
-          break
-        }
-        case "move": {throw new Error()}
-      }
+      )
     },
     // term
     fillLambda: (state) => {
@@ -193,15 +168,45 @@ export const programSlice = createSlice({
   }
 })
 
-export type NavigationDirection = "up" | "down" | "left" | "right" | "next" | "previous" | "top"
+// ArrayManipulation
 
-export type ArrayManipulation =
-  | {case: "insert", i: number}
-  | {case: "remove", i: number}
-  | {case: "move", i: number, j: number}
+export type ArrayManipulation = InsertArrayManipulation | RemoveArrayManipulation | MoveArrayManipulation
+export type InsertArrayManipulation = {case: "insert", i: number}
+export type RemoveArrayManipulation = {case: "remove", i: number}
+export type MoveArrayManipulation = {case: "move", i: number, j: number}
+
+function applyArrayManipulation<A>(
+  state: ProgramState,
+  array: A[],
+  manipulation: ArrayManipulation,
+  handlers: {
+    make: (m: InsertArrayManipulation) => A,
+    remove: (m: RemoveArrayManipulation) => void,
+    move: (m: MoveArrayManipulation) => void
+  }
+): void {
+  switch (manipulation.case) {
+    case "insert": {
+      let a: A = handlers.make(manipulation)
+      array.splice(manipulation.i, 0, a)
+      break
+    }
+    case "remove": {
+      handlers.remove(manipulation)
+      break
+    }
+    case "move": {
+      handlers.move(manipulation)
+      break
+    }
+  }
+}
+
+// Navigation
+
+export type NavigationDirection = "up" | "down" | "left" | "right" | "next" | "previous" | "top"
 
 export function moveIndex(module: Module, index: Index, direction: NavigationDirection): Index {
   throw new Error("unimplemented")
 }
 
-export default programSlice
