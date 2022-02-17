@@ -205,20 +205,26 @@ export function replaceAt<S extends Indexable, T extends Indexable>(source: S, i
 // The kinds of things you can index
 export type Indexable = Module | Statement | Constructor | Type | Block | Binding | Term | Parameter | Label
 
-export type Index = TopIndex | ModuleIndex | StatementIndex | ConstructorIndex | TypeIndex | TermIndex | BlockIndex | BindingIndex | ParameterIndex
+export type IndexStep<I extends Index> = HereIndex | I
 
-export type TopIndex = "top"
+export type HereIndex = {case: "here"}
 
-export type ModuleIndex =
-  {case: "module", i: number, index: StatementIndex}
+export type Index = ModuleIndex | StatementIndex | ConstructorIndex | TypeIndex | TermIndex | BlockIndex | BindingIndex | ParameterIndex
 
-export type StatementIndex = TypeDefinitionIndex | DataDefinitionIndex
-export type TypeDefinitionIndex = 
+// ModuleIndex
+
+export type ModuleIndex = IndexStep<{case: "module", i: number, index: StatementIndex}>
+
+// StatementIndex
+
+export type StatementIndex = IndexStep<TermDefinitionIndex | DataDefinitionIndex>
+export type TermDefinitionIndex = 
   {
-    case: "type definition",
+    case: "term definition",
     sub:
       | {case: "label"}
       | {case: "type", index: TypeIndex}
+      | {case: "term", index: TermIndex}
   }
 export type DataDefinitionIndex =
   {
@@ -228,16 +234,20 @@ export type DataDefinitionIndex =
       | {case: "constructor", i: number, index: ConstructorIndex}
   }
 
+// ConstructorIndex
+
 export type ConstructorIndex =
-  {
+  IndexStep<{
     case: "constructor", 
     sub: ConstructorSubIndex
-  }
+  }>
 export type ConstructorSubIndex =
   | {case: "label"}
   | {case: "domain", i: number, index: TypeIndex}
 
-export type TypeIndex = ArrowTypeIndex
+// TypeIndex
+
+export type TypeIndex = IndexStep<ArrowTypeIndex | DataTypeIndex>
 export type ArrowTypeIndex =
   {
     case: "arrow",
@@ -252,24 +262,28 @@ export type DataTypeIndex =
       | {case: "label"}
   }
 
+// BlockIndex
+
 export type BlockIndex =
-  {
+  IndexStep<{
     case: "block",
     sub:
       | {case: "binding", i: number, index: BindingIndex}
       | {case: "body", index: TermIndex}
-  }
+  }>
 
-export type BindingIndex = 
-  {
+export type BindingIndex =
+  IndexStep<{
     case: "binding",
     sub:
       | {case: "label"}
       | {case: "type", index: TypeIndex}
       | {case: "term", index: TermIndex}
-  }
+  }>
 
-export type TermIndex = LambdaTermTermIndex | NeutralTermTermIndex
+// TermIndex
+
+export type TermIndex = IndexStep<LambdaTermTermIndex | NeutralTermTermIndex>
 export type LambdaTermTermIndex =
   {
   case: "lambda",
@@ -286,14 +300,12 @@ export type NeutralTermTermIndex =
   }
 
 export type ParameterIndex =
-  {
+  IndexStep<{
     case: "parameter", 
     sub:
       | {case: "label"}
       | {case: "domain", index: TypeIndex}
-  }
-
-export const unknownIndex = <I extends Index>(): I => undefined as unknown as I
+  }>
 
 export function pushIndex(moduleIndex: ModuleIndex, index: Index): ModuleIndex {throw new Error()}
   
