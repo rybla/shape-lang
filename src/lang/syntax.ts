@@ -45,7 +45,7 @@ export type TermDefinition = {
 
 // Type
 
-export type Type = ArrowType | DataType | HoleType
+export type Type = ArrowType | DataType | HoleTermType
 
 export type ArrowType = {
   case: "arrow",
@@ -60,7 +60,7 @@ export type DataType = {
   format: Format
 }
 
-export type HoleType = {
+export type HoleTermType = {
   case: "hole",
   holeId: Symbol,
   format: Format
@@ -85,9 +85,9 @@ export type Binding = {
 
 // Term
 
-export type Term = Lambda | Neutral | Hole
+export type Term = LambdaTerm | NeutralTerm | HoleTerm
 
-export type Lambda = {
+export type LambdaTerm = {
   case: "lambda",
   parameters: Parameter[],
   body: Block,
@@ -101,14 +101,14 @@ export type Parameter = {
   format: Format
 }
 
-export type Neutral = {
+export type NeutralTerm = {
   case: "neutral",
   applicant: Label,
   args: Term[],
   format: Format
 }
 
-export type Hole = {
+export type HoleTerm = {
   case: "hole",
   holeId: Symbol,
   weakening: Label[],
@@ -126,7 +126,7 @@ export function freshLabel(): Label {
   return {case: "label", value: "", format: defaultFormat()}
 }
 
-export function freshHole(): Hole {
+export function freshHoleTerm(): HoleTerm {
   const holeId: unique symbol = Symbol()
   return {
     case: "hole",
@@ -137,7 +137,7 @@ export function freshHole(): Hole {
   }
 }
 
-export function freshHoleType(): HoleType {
+export function freshHoleTermType(): HoleTermType {
   const holeId: unique symbol = Symbol()
   return {
     case: "hole",
@@ -151,7 +151,7 @@ export function freshBlock(): Block {
   return {
     case: "block",
     bindings: [],
-    body: freshHole(),
+    body: freshHoleTerm(),
     format: defaultFormat()
   }
 }
@@ -210,19 +210,21 @@ export type Index = "top" | ModuleIndex | StatementIndex | ConstructorIndex | Ty
 export type ModuleIndex =
   {case: "module", i: number, index: StatementIndex}
 
-export type StatementIndex =
-  | {
+export type StatementIndex = TypeDefinitionIndex | DataDefinitionIndex
+export type TypeDefinitionIndex = 
+  {
       case: "type definition",
       sub:
         | {case: "label"}
         | {case: "type", index: TypeIndex}
-    }
-  | {
-      case: "data definition",
-      sub:
-        | {case: "label"}
-        | {case: "constructor", i: number, index: ConstructorIndex}
-    }
+  }
+export type DataDefinitionIndex =
+  {
+    case: "data definition",
+    sub:
+      | {case: "label"}
+      | {case: "constructor", i: number, index: ConstructorIndex}
+  }
 
 export type ConstructorIndex =
   {
@@ -232,18 +234,20 @@ export type ConstructorIndex =
       | {case: "domain", i: number, index: TypeIndex}
   }
 
-export type TypeIndex = 
-  | {
-      case: "arrow",
-      sub:
-        | {case: "domain", i: number, index: TypeIndex} 
-        | {case: "codomain", index: TypeIndex}
-    }
-  | {
-      case: "data",
-      sub:
-        | {case: "label"}
-    }
+export type TypeIndex = ArrowTypeIndex
+export type ArrowTypeIndex =
+  {
+    case: "arrow",
+    sub:
+      | {case: "domain", i: number, index: TypeIndex} 
+      | {case: "codomain", index: TypeIndex}
+  }
+export type DataTypeIndex =
+  {
+    case: "data",
+    sub:
+      | {case: "label"}
+  }
 
 export type BlockIndex =
   {
@@ -262,19 +266,21 @@ export type BindingIndex =
       | {case: "term", index: TermIndex}
   }
 
-export type TermIndex = 
-  | {
-      case: "lambda",
-      sub:
-        | {case: "parameter", i: number, index: ParameterIndex}
-        | {case: "body", index: TermIndex}
-    }
-  | {
-      case: "neutral",
-      sub:
-        | {case: "applicant"}
-        | {case: "argument", i: number, index: TermIndex}
-    }
+export type TermIndex = LambdaTermTermIndex | NeutralTermTermIndex
+export type LambdaTermTermIndex =
+  {
+  case: "lambda",
+  sub:
+    | {case: "parameter", i: number, index: ParameterIndex}
+    | {case: "body", index: TermIndex}
+  }
+export type NeutralTermTermIndex =
+  {
+    case: "neutral",
+    sub:
+      | {case: "applicant"}
+      | {case: "argument", i: number, index: TermIndex}
+  }
 
 export type ParameterIndex =
   {
