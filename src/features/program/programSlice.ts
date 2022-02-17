@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Map } from "immutable";
-import { removeBinding, removeConstructor, removeDomain, removeStatement } from "../../lang/model";
-import { Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHole, freshHoleType, freshLabel, Index, Indexable, Label, Lambda, lookupAt, Mode, Module, ModuleIndex, Parameter, replaceAt, Statement, Term, TermDefinition, Type } from "../../lang/syntax";
+import { insertDomain, moveDomain, removeBinding, removeConstructor, removeDomain, removeStatement } from "../../lang/model";
+import { ArrowType, Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHole, freshHoleType, freshLabel, Index, Indexable, Label, Lambda, lookupAt, Mode, Module, ModuleIndex, Parameter, replaceAt, Statement, Term, TermDefinition, Type, TypeIndex } from "../../lang/syntax";
 
 export default programSlice
 
@@ -65,7 +65,27 @@ export const programSlice = createSlice({
       )
     },
     // constructor
-    manipulateDomains: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
+    manipulateDomains: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {
+      function splitAtTypeIndex(index: Index): {parentIndex: ModuleIndex, typeIndex: TypeIndex} {throw new Error()}
+      function lastIndex<I extends Index>(index: Index): I {throw new Error()}
+      switch (action.payload.manipulation.case) {
+        case "insert": {
+          let {parentIndex, typeIndex} = splitAtTypeIndex(state.focus)
+          state.module = insertDomain(state.module, parentIndex, typeIndex, freshHoleType())
+          break
+        }
+        case "remove": {
+          let {parentIndex, typeIndex} = splitAtTypeIndex(state.focus)
+          state.module = removeDomain(state.module, parentIndex, typeIndex)
+          break
+        }
+        case "move": {
+          let {parentIndex, typeIndex} = splitAtTypeIndex(state.focus)
+          state.module = moveDomain(state.module, parentIndex, typeIndex, action.payload.manipulation.i, action.payload.manipulation.j)
+          break
+        }
+      }
+    },
     // block
     manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {
       applyArrayManipulation(
