@@ -184,10 +184,20 @@ export type Mode =
   | {case: "edit"}
   | {case: "label", label: Label}
 
-// The kinds of things you can index
-export type Indexable = Module | Statement | Constructor | Block | Binding | Term | Parameter | Label
+// Indexing
 
-// export type Index = IndexStep[]
+export function lookupAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context): {target: T, gamma: Context} {
+  throw new Error("unimplemented")
+}
+
+export function replaceAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context, replace: (target: T, gamma: Context) => T): S {
+  throw new Error("unimplemented")
+}
+
+// The kinds of things you can index
+export type Indexable = Module | Statement | Constructor | Type | Block | Binding | Term | Parameter | Label
+
+export type Index = "top" | ModuleIndex | StatementIndex | ConstructorIndex | TypeIndex | TermIndex | BlockIndex | BindingIndex| ParameterIndex
 
 export type ModuleIndex =
   {case: "module", i: number, index: StatementIndex}
