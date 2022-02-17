@@ -1,12 +1,15 @@
-// Module
-
 import ts from "typescript"
 import { Map } from "immutable"
 
+// Syntax
+
+export type Syntax = Module | Statement | Constructor | Type | Block | Binding | Term | Parameter | Label
+
+// Module
+
 export type Module = {
   case: "module",
-  statements: Statement[],
-  format: Format
+  statements: Statement[]
 }
 
 // Statement
@@ -16,31 +19,27 @@ export type Statement = DataDefinition | TermDefinition
 export type DataDefinition = {
   case: "data definition",
   label: Label,
-  constructors: Constructor[],
-  format: Format
+  constructors: Constructor[]
 }
 
 export type Constructor = {
   case: "constructor",
   label: Label,
-  domains: Type[],
-  format: Format
+  domains: Type[]
 }
 
 export const typeOfConstructor = (dataLabel: Label, constructor: Constructor): Type => 
   ({
       case: "arrow",
       domains: constructor.domains,
-      codomain: {case: "data", label: dataLabel, format: defaultFormat()},
-      format: defaultFormat()
+      codomain: {case: "data", label: dataLabel}
   })
 
 export type TermDefinition = {
   case: "term definition",
   label: Label,
   type: Type,
-  block: Block,
-  format: Format
+  block: Block
 }
 
 // Type
@@ -50,20 +49,17 @@ export type Type = ArrowType | DataType | HoleType
 export type ArrowType = {
   case: "arrow",
   domains: Type[],
-  codomain: Type,
-  format: Format
+  codomain: Type
 }
 
 export type DataType = {
   case: "data",
-  label: Label,
-  format: Format
+  label: Label
 }
 
 export type HoleType = {
   case: "hole",
-  holeId: Symbol,
-  format: Format
+  holeId: Symbol
 }
 
 // Block
@@ -71,16 +67,14 @@ export type HoleType = {
 export type Block = {
   case: "block",
   bindings: Binding[],
-  body: Term,
-  format: Format
+  body: Term
 }
 
 export type Binding = {
   case: "binding",
   label: Label,
   type: Type,
-  term: Term,
-  format: Format
+  term: Term
 }
 
 // Term
@@ -90,40 +84,36 @@ export type Term = LambdaTerm | NeutralTerm | HoleTerm
 export type LambdaTerm = {
   case: "lambda",
   parameters: Parameter[],
-  body: Block,
-  format: Format
+  body: Block
 }
 
 export type Parameter = {
   case: "parameter",
   label: Label,
-  domain: Type,
-  format: Format
+  domain: Type
 }
 
 export type NeutralTerm = {
   case: "neutral",
   applicant: Label,
-  args: Term[],
-  format: Format
+  args: Term[]
 }
 
 export type HoleTerm = {
   case: "hole",
   holeId: Symbol,
   weakening: Label[],
-  substitution: Substitution<Label, Term>,
-  format: Format
+  substitution: Substitution<Label, Term>
 }
 
 // Label
 
-export type Label = {case: "label", value: string, format: Format}
+export type Label = {case: "label", value: string}
 
 // Fresh
 
 export function freshLabel(): Label {
-  return {case: "label", value: "", format: defaultFormat()}
+  return {case: "label", value: ""}
 }
 
 export function freshHoleTerm(): HoleTerm {
@@ -132,8 +122,7 @@ export function freshHoleTerm(): HoleTerm {
     case: "hole",
     holeId,
     weakening: [],
-    substitution: [],
-    format: defaultFormat()
+    substitution: []
   }
 }
 
@@ -141,8 +130,7 @@ export function freshHoleType(): HoleType {
   const holeId: unique symbol = Symbol()
   return {
     case: "hole",
-    holeId,
-    format: defaultFormat()
+    holeId
   }
 }
 
@@ -151,8 +139,7 @@ export function freshBlock(): Block {
   return {
     case: "block",
     bindings: [],
-    body: freshHoleTerm(),
-    format: defaultFormat()
+    body: freshHoleTerm()
   }
 }
 
@@ -160,17 +147,29 @@ export function freshParameter(domain: Type): Parameter {
   return {
     case: "parameter",
     label: freshLabel(),
-    domain,
-    format: defaultFormat()
+    domain
   }
 }
 
 // Format
 
-export type FormatField = "indented" | "unannotated"
-export type Format = ts.ESMap<string, boolean>
+// export type Format<A> = { [P in keyof A]: A extends Label ? Format<P> : P } & ts.ESMap<string, boolean>
 
-export function defaultFormat(): Format {
+export type FormatData = {
+  indented?: boolean,
+  unannotated?: boolean
+}
+
+export type Format<S extends Syntax> =
+  {
+    [Key in keyof S]:
+      S extends Label ? S :
+      S[Key] extends (infer T)[] ? (T extends Syntax ? Format<T>[] : T[]) :
+      S[Key] extends Syntax ? Format<S[Key]> : S[Key]
+  } 
+  & FormatData
+
+export function defaultFormat<S extends Syntax>(syntax: S): Format<S> {
   throw new Error() // TODO: how to make empty ESMap?
 }
 
@@ -194,16 +193,13 @@ export type Mode =
 
 // Indexing
 
-export function lookupAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context): {target: T, gamma: Context} {
+export function lookupAt<S extends Syntax, T extends Syntax>(source: S, index: Index, gamma: Context): {target: T, gamma: Context} {
   throw new Error("unimplemented")
 }
 
-export function replaceAt<S extends Indexable, T extends Indexable>(source: S, index: Index, gamma: Context, replace: (target: T, gamma: Context) => T): S {
+export function replaceAt<S extends Syntax, T extends Syntax>(source: S, index: Index, gamma: Context, replace: (target: T, gamma: Context) => T): S {
   throw new Error("unimplemented")
 }
-
-// The kinds of things you can index
-export type Indexable = Module | Statement | Constructor | Type | Block | Binding | Term | Parameter | Label
 
 export type IndexStep<I extends Index> = HereIndex | I
 
