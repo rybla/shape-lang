@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Map } from "immutable";
 import { insertDomain, moveDomain, removeBinding, removeConstructor, removeDomain, removeStatement } from "../../lang/model";
-import { ArrowType, Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHole, freshHoleType, freshLabel, Index, Indexable, Label, Lambda, lookupAt, Mode, Module, ModuleIndex, Parameter, replaceAt, Statement, Term, TermDefinition, Type, TypeIndex } from "../../lang/syntax";
+import { ArrowType, Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHoleTerm, freshHoleTermType, freshLabel, Index, Indexable, Label, LambdaTerm, lookupAt, Mode, Module, ModuleIndex, Parameter, replaceAt, Statement, Term, TermDefinition, Type, TypeIndex } from "../../lang/syntax";
 
 export default programSlice
 
@@ -9,7 +9,7 @@ export default programSlice
 
 export type ProgramState = {
   module: Module,
-  focus: Index,
+  focus: ModuleIndex,
   mode: Mode
 }
 
@@ -37,7 +37,7 @@ export const programSlice = createSlice({
           make: (m) => {
             switch (action.payload.case) {
               case "data definition": return {case: "data definition", label: freshLabel(), constructors: [], format: defaultFormat() } as DataDefinition
-              case "term definition": return { case: "term definition", label: freshLabel(), type: freshHoleType(), block: freshBlock(), format: defaultFormat()} as TermDefinition
+              case "term definition": return { case: "term definition", label: freshLabel(), type: freshHoleTermType(), block: freshBlock(), format: defaultFormat()} as TermDefinition
             }
           },
           remove: (m) => {
@@ -71,7 +71,7 @@ export const programSlice = createSlice({
       switch (action.payload.manipulation.case) {
         case "insert": {
           let {parentIndex, typeIndex} = splitAtTypeIndex(state.focus)
-          state.module = insertDomain(state.module, parentIndex, typeIndex, freshHoleType())
+          state.module = insertDomain(state.module, parentIndex, typeIndex, freshHoleTermType())
           break
         }
         case "remove": {
@@ -93,7 +93,7 @@ export const programSlice = createSlice({
         lookupAt<Module, Block>(state.module, state.focus, Map()).target.bindings,
         action.payload.manipulation,
         {
-          make: (m) => ({case: "binding", label: freshLabel(), type: freshHoleType(), term: freshHole(), format: defaultFormat()} as Binding),
+          make: (m) => ({case: "binding", label: freshLabel(), type: freshHoleTermType(), term: freshHoleTerm(), format: defaultFormat()} as Binding),
           remove: (m) => {
             state.module = removeBinding(state.module, state.focus as ModuleIndex)
             state.focus = moveIndex(state.module, state.focus, "up")
@@ -103,7 +103,7 @@ export const programSlice = createSlice({
       )
     },
     // term
-    fillLambda: (state) => {
+    fillLambdaTerm: (state) => {
       replaceAt<Module, Term>(
         state.module,
         state.focus,
@@ -116,9 +116,9 @@ export const programSlice = createSlice({
         })
       )
     },
-    fillNeutral: (state, action: PayloadAction<{label: Label, argCount: number}>) => {
+    fillNeutralTerm: (state, action: PayloadAction<{label: Label, argCount: number}>) => {
       let args: Term[] = [];
-      for (let i = 0; i < action.payload.argCount; i++) args.push(freshHole())
+      for (let i = 0; i < action.payload.argCount; i++) args.push(freshHoleTerm())
       replaceAt<Module, Term>(
         state.module,
         state.focus,
@@ -136,7 +136,7 @@ export const programSlice = createSlice({
         state.module,
         state.focus,
         Map(),
-        (target, gamma) => freshHole()
+        (target, gamma) => freshHoleTerm()
       )
     },
     // label

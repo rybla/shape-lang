@@ -38,8 +38,8 @@ export function moveDomain(
 ): Module {throw new Error()}
 
 // Fill the hole at `index` with `term`
-export function fillHole(module: Module, index: Index, term: Term): Module {throw new Error()}
+export function fillHoleTerm(module: Module, index: Index, term: Term): Module {throw new Error()}
 
 // Dig a hole at `index`.
-export function digHole(module: Module, index: Index): Module {throw new Error()}
+export function digHoleTerm(module: Module, index: Index): Module {throw new Error()}
 
