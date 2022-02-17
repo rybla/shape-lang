@@ -45,7 +45,7 @@ export type TermDefinition = {
 
 // Type
 
-export type Type = ArrowType | DataType | HoleTermType
+export type Type = ArrowType | DataType | HoleType
 
 export type ArrowType = {
   case: "arrow",
@@ -60,7 +60,7 @@ export type DataType = {
   format: Format
 }
 
-export type HoleTermType = {
+export type HoleType = {
   case: "hole",
   holeId: Symbol,
   format: Format
@@ -137,7 +137,7 @@ export function freshHoleTerm(): HoleTerm {
   }
 }
 
-export function freshHoleTermType(): HoleTermType {
+export function freshHoleType(): HoleType {
   const holeId: unique symbol = Symbol()
   return {
     case: "hole",
@@ -205,7 +205,9 @@ export function replaceAt<S extends Indexable, T extends Indexable>(source: S, i
 // The kinds of things you can index
 export type Indexable = Module | Statement | Constructor | Type | Block | Binding | Term | Parameter | Label
 
-export type Index = "top" | ModuleIndex | StatementIndex | ConstructorIndex | TypeIndex | TermIndex | BlockIndex | BindingIndex | ParameterIndex
+export type Index = TopIndex | ModuleIndex | StatementIndex | ConstructorIndex | TypeIndex | TermIndex | BlockIndex | BindingIndex | ParameterIndex
+
+export type TopIndex = "top"
 
 export type ModuleIndex =
   {case: "module", i: number, index: StatementIndex}
@@ -213,10 +215,10 @@ export type ModuleIndex =
 export type StatementIndex = TypeDefinitionIndex | DataDefinitionIndex
 export type TypeDefinitionIndex = 
   {
-      case: "type definition",
-      sub:
-        | {case: "label"}
-        | {case: "type", index: TypeIndex}
+    case: "type definition",
+    sub:
+      | {case: "label"}
+      | {case: "type", index: TypeIndex}
   }
 export type DataDefinitionIndex =
   {
@@ -229,10 +231,11 @@ export type DataDefinitionIndex =
 export type ConstructorIndex =
   {
     case: "constructor", 
-    sub: 
-      | {case: "label"}
-      | {case: "domain", i: number, index: TypeIndex}
+    sub: ConstructorSubIndex
   }
+export type ConstructorSubIndex =
+  | {case: "label"}
+  | {case: "domain", i: number, index: TypeIndex}
 
 export type TypeIndex = ArrowTypeIndex
 export type ArrowTypeIndex =
@@ -290,4 +293,7 @@ export type ParameterIndex =
       | {case: "domain", index: TypeIndex}
   }
 
+export const unknownIndex = <I extends Index>(): I => undefined as unknown as I
+
+export function pushIndex(moduleIndex: ModuleIndex, index: Index): ModuleIndex {throw new Error()}
   
