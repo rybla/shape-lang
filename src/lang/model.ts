@@ -1,21 +1,21 @@
 import { BindingIndex, Index, Module, Term, Type, TypeIndex } from "./syntax";
 
-// Delete the statement at `index`.
-export function deleteStatement(module: Module, index: Index): Module {throw new Error()}
+// Remove the statement at `index`.
+export function removeStatement(module: Module, index: Index): Module {throw new Error()}
 
-// Delete the constructor at `index`.
-export function deleteConstructor(module: Module, index: Index): Module {throw new Error()}
+// Remove the constructor at `index`.
+export function removeConstructor(module: Module, index: Index): Module {throw new Error()}
 
-// Delete the binding at `index`.
-export function deleteBinding(module: Module, index: Index): Module {throw new Error()}
+// Remove the binding at `index`.
+export function removeBinding(module: Module, index: Index): Module {throw new Error()}
 
 // Insert `domain` at `domainIndex` in the type of the name bound at `bindingIndex`.
 // Note that `domainIndex` is relative to the top of the type of the binding at `bindingIndex`.
 export function insertDomain(module: Module, domain: Type, domainIndex: TypeIndex, bindingIndex: BindingIndex): Module {throw new Error()}
 
-// Delete the domain at `domainIndex` in the type of the name bound at `bindingIndex`.
+// Remove the domain at `domainIndex` in the type of the name bound at `bindingIndex`.
 // Note that `domainIndex` is relative to the top of the type of the binding at `bindingIndex`.
-export function deleteDomain(module: Module, domainIndex: TypeIndex, bindingIndex: BindingIndex): Module {throw new Error()}
+export function removeDomain(module: Module, domainIndex: TypeIndex, bindingIndex: BindingIndex): Module {throw new Error()}
 
 // Move the domain at `sourceDomainIndex` to `targetDomainIndex`.
 // Note that `domainIndex` is relative to the top of the type of the binding at `bindingIndex`.

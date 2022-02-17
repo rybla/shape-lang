@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Map } from "immutable";
-import { deleteBinding } from "../../lang/model";
-import { Binding, Block, Context, defaultFormat, freshBlock, freshHole, freshLabel, Index, Indexable, Label, lookupAt, Mode, Module, replaceAt, Term, Type } from "../../lang/syntax";
+import { removeBinding, removeConstructor, removeDomain, removeStatement } from "../../lang/model";
+import { Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHole, freshHoleType, freshLabel, Index, Indexable, Label, Lambda, lookupAt, Mode, Module, Parameter, replaceAt, Statement, Term, Type } from "../../lang/syntax";
 
 export type ProgramState = {
   module: Module,
@@ -19,37 +19,92 @@ const initialState: ProgramState = {
   mode: {case: "edit"}
 }
 
-// function applyManipulation(manipulation: ArrayManipulation, )
+// function applyArrayManipulation<A>(manipulation: ArrayManipulation, make: () => A, remove: () => void)
 
 export const programSlice = createSlice({
   name: "program",
   initialState,
   reducers: {
     // module
-    manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>, case: "data definition" | "term definition"}>) => {}, // TODO
+    manipulateStatements: (state, action: PayloadAction<{manipulation: ArrayManipulation, case: "data definition" | "term definition"}>) => {
+      switch (action.payload.manipulation.case) {
+        case "insert": {
+          let statement: Statement;
+          switch (action.payload.case) {
+            case "data definition": {
+              statement = {
+                case: "data definition",
+                label: freshLabel(),
+                constructors: [],
+                format: defaultFormat()
+              }
+              break
+            }
+            case "term definition": {
+              statement = {
+                case: "term definition",
+                label: freshLabel(),
+                type: freshHoleType(),
+                block: freshBlock(),
+                format: defaultFormat()
+              }
+              break
+            }
+          }
+          state.module.statements.splice(action.payload.manipulation.i, 0, statement)
+          break
+        }
+        case "remove": {
+          state.module = removeStatement(state.module, state.focus)
+          break
+        }
+        case "move": {throw new Error()}
+      }
+    },
     // data definition
-    manipulateConstructors: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>}>) => {}, // TODO
+    manipulateConstructors: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {
+      switch (action.payload.manipulation.case) {
+        case "insert": {
+          let constructor: Constructor = {
+            case: "constructor",
+            label: freshLabel(),
+            domains: [],
+            format: defaultFormat()
+          }
+          let dataDefinition: DataDefinition = lookupAt<Module, DataDefinition>(state.module, state.focus, Map()).target
+          dataDefinition.constructors.splice(action.payload.manipulation.i, 0, constructor)
+          break
+        }
+        case "remove": {
+          state.module = removeConstructor(state.module, state.focus)
+          state.focus = moveIndex(state.module, state.focus, "up")
+          break
+        }
+        case "move": {throw new Error()}
+      }
+    },
     // constructor
-    manipulateDomains: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>}>) => {}, // TODO
+    manipulateDomains: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {}, // TODO
     // block
-    manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>}>) => {
+    manipulateBindings: (state, action: PayloadAction<{manipulation: ArrayManipulation}>) => {
       let block = lookupAt<Module, Block>(state.module, state.focus, Map()).target
       switch (action.payload.manipulation.case) {
         case "insert": {
           let binding: Binding = {
             case: "binding",
             label: freshLabel(),
-            type: action.payload.manipulation.data,
+            type: freshHoleType(),
             term: freshHole(),
             format: defaultFormat()
           }
           block.bindings.splice(action.payload.manipulation.i, 0, binding)
-          break;
+          break
         }
-        case "delete": {
-          state.module = deleteBinding(state.module, state.focus)
-          break;
+        case "remove": {
+          state.module = removeBinding(state.module, state.focus)
+          break
         }
+        case "move": {throw new Error()}
       }
     },
     // term
@@ -89,19 +144,34 @@ export const programSlice = createSlice({
         (target, gamma) => freshHole()
       )
     },
-    // TODO: applyFunction: (state, action: PayloadAction<{applicant: Label, argCount: number, i: number}>) => {}, // TODO
-    // parameter
-    manipulateParameters: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>}>) => {}, // TODO
     // label
-    appendLabel: (state, action: PayloadAction<string>) => {}, // TODO
-    backspaceLabel: (state) => {}, // TODO
+    appendLabel: (state, action: PayloadAction<string>) => {
+      switch (state.mode.case) {
+        case "label": {
+          state.mode.label.value = state.mode.label.value.concat(action.payload)
+          break
+        }
+        default: break;
+      }
+    },
+    backspaceLabel: (state) => {
+      switch (state.mode.case) {
+        case "label": {
+          state.mode.label.value = state.mode.label.value.slice(0, state.mode.label.value.length - 2)
+          break
+        }
+        default: break;
+      }
+    },
     // format
-    toggleIndented: (state) => {}, // TODO
-    toggleUnannotated: (state) => {}, // TODO
-    // navigation
+    toggleFormatAttribute: (state, action: PayloadAction<FormatField>) => {
+      let node = lookupAt<Module, Indexable>(state.module, state.focus, Map()).target
+      if (!node.format.has(action.payload)) node.format.set(action.payload, false)
+      node.format.set(action.payload, !node.format.get(action.payload))
+    },
     moveFocus: (state, action: PayloadAction<NavigationDirection>) => {
       state.focus = moveIndex(state.module, state.focus, action.payload)
-    }, // TODO
+    },
     // mode
     editMode: (state) => {
       state.mode = {
@@ -125,9 +195,9 @@ export const programSlice = createSlice({
 
 export type NavigationDirection = "up" | "down" | "left" | "right" | "next" | "previous" | "top"
 
-export type ArrayManipulation<A> =
-  | {case: "insert", i: number, data: A}
-  | {case: "delete", i: number}
+export type ArrayManipulation =
+  | {case: "insert", i: number}
+  | {case: "remove", i: number}
   | {case: "move", i: number, j: number}
 
 export function moveIndex(module: Module, index: Index, direction: NavigationDirection): Index {

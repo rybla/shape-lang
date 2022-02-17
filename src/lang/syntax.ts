@@ -1,5 +1,6 @@
 // Module
 
+import ts from "typescript"
 import { Map } from "immutable"
 
 export type Module = {
@@ -117,12 +118,12 @@ export type Hole = {
 
 // Label
 
-export type Label = {case: "label", value: string}
+export type Label = {case: "label", value: string, format: Format}
 
 // Fresh
 
 export function freshLabel(): Label {
-  return {case: "label", value: ""}
+  return {case: "label", value: "", format: defaultFormat()}
 }
 
 export function freshHole(): Hole {
@@ -132,6 +133,15 @@ export function freshHole(): Hole {
     holeId,
     weakening: [],
     substitution: [],
+    format: defaultFormat()
+  }
+}
+
+export function freshHoleType(): HoleType {
+  const holeId: unique symbol = Symbol()
+  return {
+    case: "hole",
+    holeId,
     format: defaultFormat()
   }
 }
@@ -157,13 +167,11 @@ export function freshParameter(domain: Type): Parameter {
 
 // Format
 
-export type Format = {
-  indented?: boolean
-  unannotated?: boolean
-}
+export type FormatField = "indented" | "unannotated"
+export type Format = ts.ESMap<string, boolean>
 
 export function defaultFormat(): Format {
-  return {}
+  throw new Error() // TODO: how to make empty ESMap?
 }
 
 // Context
