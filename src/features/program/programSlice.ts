@@ -47,7 +47,7 @@ export const programSlice = createSlice({
           break;
         }
         case "delete": {
-          state.module = deleteBinding(state.module, state.focus, action.payload.manipulation.i)
+          state.module = deleteBinding(state.module, state.focus)
           break;
         }
       }
@@ -89,7 +89,7 @@ export const programSlice = createSlice({
         (target, gamma) => freshHole()
       )
     },
-    apply: (state, action: PayloadAction<{applicant: Label, argCount: number, i: number}>) => {}, // TODO
+    // TODO: applyFunction: (state, action: PayloadAction<{applicant: Label, argCount: number, i: number}>) => {}, // TODO
     // parameter
     manipulateParameters: (state, action: PayloadAction<{manipulation: ArrayManipulation<Type>}>) => {}, // TODO
     // label
