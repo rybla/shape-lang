@@ -39,7 +39,7 @@ export type TermDefinition = {
   case: "term definition",
   label: Label,
   type: Type,
-  block: Block
+  block: Term
 }
 
 // Type
