@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Map } from "immutable";
 import { removeBinding, removeConstructor, removeDomain, removeStatement } from "../../lang/model";
-import { Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHole, freshHoleType, freshLabel, Index, Indexable, Label, Lambda, lookupAt, Mode, Module, Parameter, replaceAt, Statement, Term, TermDefinition, Type } from "../../lang/syntax";
+import { Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHole, freshHoleType, freshLabel, Index, Indexable, Label, Lambda, lookupAt, Mode, Module, ModuleIndex, Parameter, replaceAt, Statement, Term, TermDefinition, Type } from "../../lang/syntax";
 
 export default programSlice
 
@@ -41,7 +41,7 @@ export const programSlice = createSlice({
             }
           },
           remove: (m) => {
-            state.module = removeStatement(state.module, state.focus)
+            state.module = removeStatement(state.module, state.focus as ModuleIndex)
             state.focus = moveIndex(state.module, state.focus, "up")
           },
           move: (m) => {throw new Error()}
@@ -57,7 +57,7 @@ export const programSlice = createSlice({
         {
           make: (m) => ({case: "constructor", label: freshLabel(), domains: [], format: defaultFormat()} as Constructor),
           remove: (m) => {
-            state.module = removeConstructor(state.module, state.focus)
+            state.module = removeConstructor(state.module, state.focus as ModuleIndex)
             state.focus = moveIndex(state.module, state.focus, "up")
           },
           move: (m) => {throw new Error()}
@@ -75,7 +75,7 @@ export const programSlice = createSlice({
         {
           make: (m) => ({case: "binding", label: freshLabel(), type: freshHoleType(), term: freshHole(), format: defaultFormat()} as Binding),
           remove: (m) => {
-            state.module = removeBinding(state.module, state.focus)
+            state.module = removeBinding(state.module, state.focus as ModuleIndex)
             state.focus = moveIndex(state.module, state.focus, "up")
           },
           move: (m) => {throw new Error()}
