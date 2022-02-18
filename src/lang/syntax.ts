@@ -2,41 +2,49 @@ import { Map } from "immutable"
 
 // Syntax
 
-export type Syntax = Module | Statement | Constructor | Type | Block | Binding | Term | Parameter | Label
+export type Syntax = 
+  | Block
+  | Definition
+  | Constructor
+  | Type
+  | Term
+  | Parameter
+  | Name
 
-// Module
+// Block
 
-export type Module = {
-  case: "module",
-  statements: Statement[]
+export type Block = {
+  case: "block",
+  definitions: Definition[],
+  body: Term
 }
 
-// Statement
+// Definition
 
-export type Statement = DataDefinition | TermDefinition
+export type Definition = DataDefinition | TermDefinition
 
 export type DataDefinition = {
   case: "data definition",
-  label: Label,
+  binding: Binding,
   constructors: Constructor[]
 }
 
 export type Constructor = {
   case: "constructor",
-  label: Label,
-  domains: Type[]
+  binding: Binding,
+  parameters: Parameter[]
 }
 
-export const typeOfConstructor = (dataLabel: Label, constructor: Constructor): Type => 
+export const typeOfConstructor = (dataRef: Reference, constructor: Constructor): Type => 
   ({
       case: "arrow",
-      domains: constructor.domains,
-      codomain: {case: "data", label: dataLabel}
+      parameters: constructor.parameters,
+      output: {case: "data", reference: dataRef}
   })
 
 export type TermDefinition = {
   case: "term definition",
-  label: Label,
+  binding: Binding,
   type: Type,
   term: Term
 }
@@ -47,33 +55,18 @@ export type Type = ArrowType | DataType | HoleType
 
 export type ArrowType = {
   case: "arrow",
-  domains: Type[],
-  codomain: DataType | HoleType
+  parameters: Parameter[],
+  output: DataType | HoleType
 }
 
 export type DataType = {
   case: "data",
-  label: Label
+  reference: Reference
 }
 
 export type HoleType = {
   case: "hole",
-  holeId: Symbol
-}
-
-// Block
-
-export type Block = {
-  case: "block",
-  bindings: Binding[],
-  body: Term
-}
-
-export type Binding = {
-  case: "binding",
-  label: Label,
-  type: Type,
-  term: Term
+  holeId: HoleId
 }
 
 // Term
@@ -82,77 +75,105 @@ export type Term = LambdaTerm | NeutralTerm | HoleTerm
 
 export type LambdaTerm = {
   case: "lambda",
-  parameters: Parameter[],
   body: Block
-}
-
-export type Parameter = {
-  case: "parameter",
-  label: Label,
-  domain: Type
 }
 
 export type NeutralTerm = {
   case: "neutral",
-  applicant: Label,
+  reference: Reference
   args: Term[]
 }
 
 export type HoleTerm = {
   case: "hole",
   holeId: Symbol,
-  weakening: Label[],
-  substitution: Substitution<Label, Term>
+  weakening: Weakening,
+  substitution: Substitution<Name, Term>
 }
 
-// Label
+// Parameter
 
-export type Label = {case: "label", value: string}
+export type Parameter = {
+  case: "parameter"
+  name: Name,
+  type: Type
+}
+
+// Binding
+
+export type Binding = {
+  case: "binding",
+  name: Name,
+  id: Id
+}
+
+// Reference
+
+export type Reference = {
+  case: "reference",
+  id: Id
+}
+
+// Name
+
+export type Name = string
+
+// Id (unique)
+
+export type Id = Symbol
+
+// HoleId (unique)
+
+export type HoleId = Symbol
 
 // Fresh
 
-export function freshLabel(): Label {
-  return {case: "label", value: ""}
-}
+// export function freshName(): Name {
+//   return ""
+// }
 
-export function freshHoleTerm(): HoleTerm {
-  const holeId: unique symbol = Symbol()
-  return {
-    case: "hole",
-    holeId,
-    weakening: [],
-    substitution: []
-  }
-}
+// export function freshHoleTerm(): HoleTerm {
+//   const holeId: unique symbol = Symbol()
+//   return {
+//     case: "hole",
+//     holeId,
+//     weakening: [],
+//     substitution: []
+//   }
+// }
 
-export function freshHoleType(): HoleType {
-  const holeId: unique symbol = Symbol()
-  return {
-    case: "hole",
-    holeId
-  }
-}
+// export function freshHoleType(): HoleType {
+//   const holeId: unique symbol = Symbol()
+//   return {
+//     case: "hole",
+//     holeId
+//   }
+// }
 
-// Creates an empty block (0 bindings) with a fresh hole
-export function freshBlock(): Block {
-  return {
-    case: "block",
-    bindings: [],
-    body: freshHoleTerm()
-  }
-}
+// // Creates an empty block (0 bindings) with a fresh hole
+// export function freshBlock(): Block {
+//   return {
+//     case: "block",
+//     definitions: [],
+//     body: freshHoleTerm()
+//   }
+// }
 
-export function freshParameter(domain: Type): Parameter {
-  return {
-    case: "parameter",
-    label: freshLabel(),
-    domain
-  }
-}
+// export function freshParameter(domain: Type): Parameter {
+//   return {
+//     case: "parameter",
+//     name: freshName(),
+//     domain
+//   }
+// }
 
 // Context
 
-export type Context = Map<Label, Type>
+export type Context = Map<Name, Type>
+
+// Weakening
+
+export type Weakening = Id[]
 
 // Substitution
 
@@ -161,10 +182,4 @@ export type SubstitutionItem<A, B> = {
   key: A,
   value: B
 }
-
-// Mode
-
-export type Mode = 
-  | {case: "edit"}
-  | {case: "label", label: Label}
 
