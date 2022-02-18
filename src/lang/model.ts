@@ -1,4 +1,4 @@
-import { ESMap } from "typescript";
+import { Map } from "immutable";
 import { ModuleIndex, Index, Module, Term, Type, TypeIndex, DataType, HoleType, Label, NeutralTerm, Block } from "./syntax";
 
 type Change = {
@@ -30,7 +30,7 @@ type Either<a,b> = {
   val : b
 }
 type Delete = {}
-type ChangeCtx = ESMap<Label, Either<Change, Delete>>
+type ChangeCtx = Map<Label, Either<Change, Delete>>
 
 function changeTerm(term : Term, changes : ChangeCtx, change : Change) : Term {
   if(term.case === "lambda"){
