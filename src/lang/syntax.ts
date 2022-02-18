@@ -1,4 +1,3 @@
-import ts from "typescript"
 import { Map } from "immutable"
 
 // Syntax
@@ -153,8 +152,6 @@ export function freshParameter(domain: Type): Parameter {
 
 // Format
 
-// export type Format<A> = { [P in keyof A]: A extends Label ? Format<P> : P } & ts.ESMap<string, boolean>
-
 export type FormatData = {
   indented?: boolean,
   unannotated?: boolean
@@ -170,7 +167,7 @@ export type Format<S extends Syntax> =
   & FormatData
 
 export function defaultFormat<S extends Syntax>(syntax: S): Format<S> {
-  throw new Error() // TODO: how to make empty ESMap?
+  throw new Error()
 }
 
 // Context
