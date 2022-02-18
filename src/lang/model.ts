@@ -1,4 +1,53 @@
-import { ModuleIndex, Index, Module, Term, Type, TypeIndex } from "./syntax";
+import { ESMap } from "typescript";
+import { ModuleIndex, Index, Module, Term, Type, TypeIndex, DataType, HoleType, Label, NeutralTerm, Block } from "./syntax";
+
+type Change = {
+  case : "input",
+  change : Change,
+  index : number
+// } | {
+  // case : "output"
+} | {
+  case : "deleteInput",
+  index : number
+} | {
+  case : "insertInput",
+  index : number
+} | {
+  case : "changeInput",
+  index : number,
+  newType : Type
+} | {
+  case : "changeOutput",
+  newType : DataType | HoleType
+}
+
+type Either<a,b> = {
+  case : "left",
+  val : a
+} | {
+  case : "right",
+  val : b
+}
+type Delete = {}
+type ChangeCtx = ESMap<Label, Either<Change, Delete>>
+
+function changeTerm(term : Term, changes : ChangeCtx, change : Change) : Term {
+  if(term.case === "lambda"){
+  } else if(term.case === "neutral"){
+  } else if(term.case === "hole"){
+  }
+  throw new Error("shouldn't get here");
+}
+function changeNeutral(neu : NeutralTerm, changes : ChangeCtx, change : Change) : NeutralTerm {
+  throw new Error();
+}
+function changeBlock(neu : Block, changes : ChangeCtx, change : Change) : Block {
+  throw new Error();
+}
+function searchBlock(neu : Block, changes : ChangeCtx) : Block {
+  throw new Error();
+}
 
 // Remove the statement at `index`.
 export function removeStatement(module: Module, index: ModuleIndex): Module {throw new Error()}
