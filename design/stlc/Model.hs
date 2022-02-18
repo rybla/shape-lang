@@ -26,6 +26,4 @@ type Hole = Symbol
 
 type Name = String
 
-type Reference = Symbol
-
 --
