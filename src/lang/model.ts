@@ -1,5 +1,6 @@
 import { Map } from "immutable";
-import { ModuleIndex, Index, Module, Term, Type, TypeIndex, DataType, HoleType, Label, NeutralTerm, Block } from "./syntax";
+import { Index, ModuleIndex, TypeIndex } from ".";
+import { Module, Term, Type, DataType, HoleType, Label, NeutralTerm, Block } from "./syntax";
 
 type Change = {
   case : "input",

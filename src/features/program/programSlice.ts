@@ -1,14 +1,15 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Map } from "immutable";
+import { lookupAt, ModuleIndex, replaceAt } from "../../lang";
 import { insertDomain, moveDomain, removeBinding, removeConstructor, removeDomain, removeStatement } from "../../lang/model";
-import { ArrowType, Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHoleTerm, freshHoleTermType, freshLabel, Index, Indexable, Label, LambdaTerm, lookupAt, Mode, Module, ModuleIndex, Parameter, replaceAt, Statement, Term, TermDefinition, Type, TypeIndex } from "../../lang/syntax";
+import { ArrowType, Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHoleTerm, freshHoleType, freshLabel, Index, Syntax, Label, LambdaTerm, Mode, Module, Parameter, Statement, Term, TermDefinition, Type, Format } from "../../lang/syntax";
 
 export default programSlice
 
 // programSlice
 
 export type ProgramState = {
-  module: Module,
+  module: Format<Module>,
   focus: ModuleIndex,
   mode: Mode
 }
@@ -16,8 +17,7 @@ export type ProgramState = {
 const initialState: ProgramState = {
   module: {
     case: "module",
-    statements: [],
-    format: defaultFormat()
+    statements: []
   },
   focus: "top",
   mode: {case: "edit"}
@@ -36,8 +36,8 @@ export const programSlice = createSlice({
         {
           make: (m) => {
             switch (action.payload.case) {
-              case "data definition": return {case: "data definition", label: freshLabel(), constructors: [], format: defaultFormat() } as DataDefinition
-              case "term definition": return { case: "term definition", label: freshLabel(), type: freshHoleTermType(), block: freshBlock(), format: defaultFormat()} as TermDefinition
+              case "data definition": return {case: "data definition", label: freshLabel(), constructors: [] } as DataDefinition
+              case "term definition": return { case: "term definition", label: freshLabel(), type: freshHoleType(), block: freshBlock()} as TermDefinition
             }
           },
           remove: (m) => {
@@ -55,7 +55,7 @@ export const programSlice = createSlice({
         lookupAt<Module, DataDefinition>(state.module, state.focus, Map()).target.constructors,
         action.payload.manipulation,
         {
-          make: (m) => ({case: "constructor", label: freshLabel(), domains: [], format: defaultFormat()} as Constructor),
+          make: (m) => ({case: "constructor", label: freshLabel(), domains: []} as Constructor),
           remove: (m) => {
             state.module = removeConstructor(state.module, state.focus as ModuleIndex)
             state.focus = moveIndex(state.module, state.focus, "up")
@@ -71,7 +71,7 @@ export const programSlice = createSlice({
       switch (action.payload.manipulation.case) {
         case "insert": {
           let {parentIndex, typeIndex} = splitAtTypeIndex(state.focus)
-          state.module = insertDomain(state.module, parentIndex, typeIndex, freshHoleTermType())
+          state.module = insertDomain(state.module, parentIndex, typeIndex, freshHoleType())
           break
         }
         case "remove": {
@@ -93,7 +93,7 @@ export const programSlice = createSlice({
         lookupAt<Module, Block>(state.module, state.focus, Map()).target.bindings,
         action.payload.manipulation,
         {
-          make: (m) => ({case: "binding", label: freshLabel(), type: freshHoleTermType(), term: freshHoleTerm(), format: defaultFormat()} as Binding),
+          make: (m) => ({case: "binding", label: freshLabel(), type: freshHoleType(), term: freshHoleTerm()} as Binding),
           remove: (m) => {
             state.module = removeBinding(state.module, state.focus as ModuleIndex)
             state.focus = moveIndex(state.module, state.focus, "up")
@@ -160,7 +160,7 @@ export const programSlice = createSlice({
     },
     // format
     toggleFormatAttribute: (state, action: PayloadAction<FormatField>) => {
-      let node = lookupAt<Module, Indexable>(state.module, state.focus, Map()).target
+      let node = lookupAt<Module, Syntax>(state.module, state.focus, Map()).target
       if (!node.format.has(action.payload)) node.format.set(action.payload, false)
       node.format.set(action.payload, !node.format.get(action.payload))
     },
