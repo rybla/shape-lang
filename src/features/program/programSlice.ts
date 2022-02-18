@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Map } from "immutable";
 import { lookupAt, ModuleIndex, replaceAt } from "../../lang";
+import { Format } from "../../lang/format";
 import { insertDomain, moveDomain, removeBinding, removeConstructor, removeDomain, removeStatement } from "../../lang/model";
-import { ArrowType, Binding, Block, Constructor, Context, DataDefinition, defaultFormat, FormatField, freshBlock, freshHoleTerm, freshHoleType, freshLabel, Index, Syntax, Label, LambdaTerm, Mode, Module, Parameter, Statement, Term, TermDefinition, Type, Format } from "../../lang/syntax";
+import { ArrowType, Binding, Block, Constructor, Context, DataDefinition,  FormatField, freshBlock, freshHoleTerm, freshHoleType, freshLabel, Index, Syntax, Label, LambdaTerm, Mode, Module, Parameter, Statement, Term, TermDefinition, Type } from "../../lang/syntax";
 
 export default programSlice
 
@@ -111,8 +112,7 @@ export const programSlice = createSlice({
         (target, gamma) => ({
             case: "lambda",
             parameters: [],
-            body: freshBlock(),
-            format: defaultFormat()
+            body: freshBlock()
         })
       )
     },
@@ -126,8 +126,7 @@ export const programSlice = createSlice({
         (target, gamma) => ({
           case: "neutral",
           applicant: action.payload.label,
-          args,
-          format: defaultFormat()
+          args
         })
       )
     },
