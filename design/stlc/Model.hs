@@ -19,7 +19,7 @@ data Type
 
 data Term
   = LambdaTerm [Id] Block
-  | NeutralTerm Id [Term]
+  | NeutralTerm Reference [Term]
   | MatchTerm
       Reference -- type of term to be matched on
       Term -- term to be matched on
