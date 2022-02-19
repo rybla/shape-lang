@@ -10,12 +10,12 @@ data Definition
   = TermDefinition (Name, Id) Type Term
   | DataDefinition (Name, Id) [Constructor]
 
+data Constructor = Constructor (Name, Id) [(Name, Type)]
+
 data Type
   = ArrowType [(Name, Type)] (Either Reference Hole)
   | DataType Reference
   | HoleType Hole
-
-data Constructor = Constructor (Name, Id) [(Name, Type)]
 
 data Term
   = LambdaTerm [Id] Block
