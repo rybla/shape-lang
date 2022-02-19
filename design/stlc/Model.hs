@@ -11,11 +11,11 @@ data Definition
   | DataDefinition Binding [Constructor]
 
 data Type
-  = ArrowType [(Name , Type)] (Either Reference Hole)
+  = ArrowType [Parameter] (Either Reference Hole)
   | DataType Reference
   | HoleType Hole
 
-data Constructor = Constructor Binding [(Name , Type)]
+data Constructor = Constructor Binding [(Name, Type)]
 
 data Term
   = LambdaTerm [Id] Block
@@ -24,7 +24,9 @@ data Term
   | MatchTerm Reference [([Reference], Term)] Term
 --            ^ the type  ^ args       ^ case ^ term to be matched on
 
--- Binding & Reference
+-- Parameter, Binding, Reference
+
+type Parameter = (Name, Type)
 
 type Binding = (Name, Id)
 
