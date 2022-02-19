@@ -23,7 +23,7 @@ data Term
   | MatchTerm
       Reference -- type of term to be matched on
       Term -- term to be matched on
-      [([Id], Term)] -- cases of matched term
+      [([Id], Block)] -- cases of matched term
   | HoleTerm Hole Weakening Substitution
 
 -- Reference, Name, Id
