@@ -11,5 +11,5 @@ symbolCountSource = unsafePerformIO (newIORef 0)
 
 newSymbol :: () -> Symbol
 newSymbol _ = unsafePerformIO $ do
-  i <- atomicModifyIORef' symbolCountSource $ \i -> let i' = i + 1 in (i', i)
+  i <- atomicModifyIORef' symbolCountSource $ \i -> (i + 1, i)
   return (Symbol i)
