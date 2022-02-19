@@ -1,62 +1,58 @@
 module Model where
 
+import Syntax
+import Data.Map ( Map )
 import Symbol
 
-type Program = Block
+type Permuation = [Int]
 
-data Block = Block [Definition] Term
+-- Change to an argument list
+data Change =
+    Output Change |
+    Change Type |
+    InputChange InputChange
 
-data Definition
-  = TermDefinition UniqueBinding Type Term
-  | DataDefinition UniqueBinding [Constructor]
+data InputChange = Input Int Change | Insert Int Parameter | Delete Int | Permute Permuation
 
-data Constructor = Constructor UniqueBinding [Parameter]
 
-data Type
-  = ArrowType [Parameter] (Either Reference Hole)
-  | DataType Reference
-  | HoleType Hole
+type Changes = Map Binding (Maybe Change) -- Nothing means deletion, Just change means do that change
 
-data Term
-  = LambdaTerm [Binding] Block -- the ids are specified in its `ArrowType`
-  | NeutralTerm Reference [Term]
-  | MatchTerm
-      Reference -- type of term to match on (must be a DataType)
-      Term -- term to match on
-      [Case] -- cases of matched term
-  | HoleTerm Hole Weakening Substitution
+-- Why arent these basic function in haskell's standard library?
+deleteAt :: [a] -> Int -> [a]
+deleteAt xs i = take i xs ++ drop (i + 1) xs
 
-data Case
-  = Case
-      Reference -- to the `Constructor`
-      [Binding] -- instances of the `Constructor`'s `Parameter`s
-      Block
+insertAt :: [a] -> Int -> a -> [a]
+insertAt xs i x = take i xs ++ [x] ++ drop i xs
 
--- Parameter, Binding, UniqueBinding
+applyAt :: [a] -> Int -> (a -> a) -> [a]
+applyAt xs i f = take i xs ++ [f (xs !! i)] ++ drop i xs
 
--- A `Parameter` appears where the type of a function specifies the name of a `Parameter` and its `Type`, as in `ArrowType` or `Constructor`. No `Id` is specified since this is not an instance of the `Name` as a term. The same `Parameter`'s `Name` could be instantiated multiple times, such as in distinct `LambdaTerm`s and `MatchTerm` cases.
-type Parameter = (Name, Type)
+chType :: Type -> Change -> Type
+chType (ArrowType params out) (InputChange (Input i c))
+    = ArrowType (applyAt params i (\(name, t) -> (name, chType t c))) out
+chType (ArrowType params out) (Output (Change (BaseType b))) = ArrowType params b -- Should only change output to a base type!
+chType (ArrowType params out) (InputChange (Insert i t)) = ArrowType (insertAt params i t) out
+chType (ArrowType params out) (InputChange (Delete i)) = ArrowType (deleteAt params i) out
+chType (ArrowType params out) (InputChange (Permute p)) = undefined
+chType _ (Change t) = t
+chType _ _ = error "shouldn't get here"
 
--- A `Binding` appears where an instance of a `Name` is bound, as in `LambdaTerm` and `Case`. The `Name` that is bound is contextually determined, by a `ArrowType` and `Constructor` respectively.
-type Binding = Id
+-- convert arguments to a function of type T into arguments to a function of type (chType T change)
+chArgs :: [Term] -> Changes -> InputChange -> [Term]
+chArgs args gamma (Insert i p)
+    = insertAt (searchArgs gamma args) i (HoleTerm (newSymbol ()) undefined undefined)
+chArgs args gamma (Input i c) = searchArgs gamma (applyAt args i (\t -> chTerm t gamma c))
+chArgs args gamma (Delete i) = searchArgs gamma (deleteAt args i)
+chArgs args gamma (Permute p) = undefined
 
--- A `UniqueBinding` appears where a `Name` is introduced and a unique instance of that `Name` is bound at once.
-type UniqueBinding = (Name, Id)
+searchArgs :: Changes -> [Term] -> [Term]
+searchArgs gamma = map (searchTerm gamma)
 
--- Reference, Name, Id
+-- Convert a term of type T into a term of type (chType T change)
+chTerm :: Term -> Changes -> Change -> Term
+chTerm = undefined
 
-type Reference = Id
+searchTerm :: Changes -> Term -> Term
+searchTerm = undefined
 
-type Name = String -- not necessarily unique
-
-type Id = Symbol -- unique
-
--- Hole
-
-type Hole = Id
-
--- Weakening & Substitution
-
-data Weakening -- TODO
-
-data Substitution -- TODO
+-- TODO: reorder args of functions to make mapping easier
