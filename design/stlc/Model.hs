@@ -10,7 +10,7 @@ data Definition
   = TermDefinition (Id, Name) Type Term
   | DataDefinition Id [Constructor]
 
-data Constructor = Constructor Id [Parameter]
+data Constructor = Constructor (Name, Id) [Parameter]
 
 data Type
   = ArrowType [Parameter] (Either Reference Hole)
