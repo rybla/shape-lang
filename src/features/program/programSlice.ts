@@ -3,17 +3,23 @@ import { Map } from "immutable";
 import { lookupAt, ModuleIndex, replaceAt } from "../../lang";
 import { Format } from "../../lang/format";
 import { insertDomain, moveDomain, removeBinding, removeConstructor, removeDomain, removeStatement } from "../../lang/model";
-import { ArrowType, Binding, Block, Constructor, Context, DataDefinition,  FormatField, freshBlock, freshHoleTerm, freshHoleType, freshLabel, Index, Syntax, Label, LambdaTerm, Mode, Module, Parameter, Statement, Term, TermDefinition, Type } from "../../lang/syntax";
+import { ArrowType, Binding, Block, Constructor, Context, DataDefinition,  FormatField, freshBlock, freshHoleTerm, freshHoleType, freshLabel, Index, Syntax, Label, LambdaTerm, Parameter, Statement, Term, TermDefinition, Type } from "../../lang/syntax";
 
 export default programSlice
 
-// programSlice
+// ProgramState
 
 export type ProgramState = {
   module: Format<Module>,
   focus: ModuleIndex,
   mode: Mode
 }
+
+export type Mode = 
+  | {case: "edit"}
+  | {case: "label", label: Label}
+
+// initialState
 
 const initialState: ProgramState = {
   module: {
@@ -23,6 +29,8 @@ const initialState: ProgramState = {
   focus: "top",
   mode: {case: "edit"}
 }
+
+// programSlice
 
 export const programSlice = createSlice({
   name: "program",

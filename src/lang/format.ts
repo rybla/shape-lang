@@ -2,15 +2,13 @@
 
 import { Label, Syntax } from "./syntax"
 
-export type FormatData = {
-  indented?: boolean,
-  unannotated?: boolean
-}
+export type FormatField = "indented" | "unannotated"
+export type FormatData = { [K in FormatField]?: boolean }
 
 export type Format<S extends Syntax> =
   {
     [Key in keyof S]:
-      S extends Label ? S :
+      S[Key] extends Label ? S :
       S[Key] extends (infer T)[] ? (T extends Syntax ? Format<T>[] : T[]) :
       S[Key] extends Syntax ? Format<S[Key]> : S[Key]
   } 

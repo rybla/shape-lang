@@ -9,6 +9,8 @@ export type Syntax =
   | Type
   | Term
   | Parameter
+  | Binding
+  | Name
   | Reference
 
 // Block
@@ -25,13 +27,13 @@ export type Definition = DataDefinition | TermDefinition
 
 export type DataDefinition = {
   case: "data definition",
-  binding: Binding,
+  id: Id,
   constructors: Constructor[]
 }
 
 export type Constructor = {
   case: "constructor",
-  binding: Binding,
+  binding: UniqueBinding,
   parameters: Parameter[]
 }
 
@@ -44,7 +46,7 @@ export const typeOfConstructor = (dataRef: Reference, constructor: Constructor):
 
 export type TermDefinition = {
   case: "term definition",
-  binding: Binding,
+  binding: UniqueBinding,
   type: Type,
   term: Term
 }
@@ -71,17 +73,31 @@ export type HoleType = {
 
 // Term
 
-export type Term = LambdaTerm | NeutralTerm | HoleTerm
+export type Term = LambdaTerm | NeutralTerm | MatchTerm | HoleTerm
 
 export type LambdaTerm = {
   case: "lambda",
-  body: Block
+  ids: Id[],
+  block: Block
 }
 
 export type NeutralTerm = {
   case: "neutral",
   reference: Reference
   args: Term[]
+}
+
+export type MatchTerm = {
+  case: "match",
+  reference: Reference,
+  term: Term,
+  cases: Case[]
+}
+
+export type Case = {
+  case: "case",
+  ids: Id[],
+  block: Block
 }
 
 export type HoleTerm = {
@@ -99,11 +115,16 @@ export type Parameter = {
   type: Type
 }
 
-// Binding
+// Binding and UniqueBinding
 
 export type Binding = {
   case: "binding",
-  name: Name,
+  id: Id
+}
+
+export type UniqueBinding = {
+  case: "unique binding",
+  Name: Name,
   id: Id
 }
 

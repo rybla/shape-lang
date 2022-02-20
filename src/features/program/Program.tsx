@@ -8,13 +8,17 @@ import {
   BlockIndex,
   Constructor,
   ConstructorIndex,
+  ConstructorSubIndex,
   Context,
+  DataDefinitionIndex,
+  Index,
   Label,
   Mode,
   Module,
   ModuleIndex,
   Parameter,
   ParameterIndex,
+  pushIndex,
   Statement,
   StatementIndex,
   Term,
@@ -65,8 +69,12 @@ export default function Program() {
     });
     return (
       <div className="module">
-        {module.statements.map((statement) =>
-          renderStatement(statement, gamma, index.index)
+        {module.statements.map((statement, i) =>
+          renderStatement(statement, gamma, {
+            case: "module",
+            i,
+            index: { case: "here" },
+          })
         )}
       </div>
     );
@@ -75,7 +83,7 @@ export default function Program() {
   function renderStatement(
     statement: Statement,
     gamma: Context,
-    index: StatementIndex
+    index: ModuleIndex
   ): JSX.Element {
     switch (statement.case) {
       case "data definition": {
@@ -83,13 +91,26 @@ export default function Program() {
           <div className="statement data-definition">
             <div className="header">
               {data_punc}
-              {renderLabel(statement.label)}
+              {renderLabel(
+                statement.label,
+                pushIndex(index, {
+                  case: "data definition",
+                  sub: { case: "label" },
+                })
+              )}
               {assign_punc}
             </div>
             <div className="constructors">
               {intersperseLeft(
-                statement.constructors.map((construtor) =>
-                  renderConstructor(construtor, gamma)
+                statement.constructors.map((construtor, i) =>
+                  renderConstructor(
+                    construtor,
+                    gamma,
+                    pushIndex(index, {
+                      case: "constructor",
+                      sub: { case: "domain", i, index: { case: "here" } },
+                    })
+                  )
                 ),
                 alt_punc
               )}
@@ -100,11 +121,31 @@ export default function Program() {
       case "term definition": {
         return (
           <div className="statement term-definition">
-            {renderLabel(statement.label)}
+            {renderLabel(
+              statement.label,
+              pushIndex(index, {
+                case: "term definition",
+                sub: { case: "label" },
+              })
+            )}
             {colon_punc}
-            {renderType(statement.type, gamma)}
+            {renderType(
+              statement.type,
+              gamma,
+              pushIndex(index, {
+                case: "term definition",
+                sub: { case: "type", index: { case: "here" } },
+              })
+            )}
             {assign_punc}
-            {renderBlock(statement.block, gamma)}
+            {renderBlock(
+              statement.block,
+              gamma,
+              pushIndex(index, {
+                case: "term definition",
+                sub: { case: "term", index: { case: "here" } },
+              })
+            )}
           </div>
         );
       }
@@ -114,13 +155,25 @@ export default function Program() {
   function renderConstructor(
     constructor: Constructor,
     gamma: Context,
-    index: ConstructorIndex
+    index: ModuleIndex
   ): JSX.Element {
     return (
       <div className="constructor">
-        {renderLabel(constructor.label)}
+        {renderLabel(
+          constructor.label,
+          pushIndex(index, { case: "constructor", sub: { case: "label" } })
+        )}
         {colon_punc}
-        {constructor.domains.map((type) => renderType(type, gamma))}
+        {constructor.domains.map((type, i) =>
+          renderType(
+            type,
+            gamma,
+            pushIndex(index, {
+              case: "constructor",
+              sub: { case: "domain", i, index: { case: "here" } },
+            })
+          )
+        )}
       </div>
     );
   }
@@ -128,7 +181,7 @@ export default function Program() {
   function renderBlock(
     block: Block,
     gamma: Context,
-    index: BlockIndex
+    index: ModuleIndex
   ): JSX.Element {
     block.bindings.forEach((binding) => {
       gamma = gamma.set(binding.label, binding.type);
@@ -136,9 +189,27 @@ export default function Program() {
     return (
       <div className="block">
         <div className="bindings">
-          {block.bindings.map((binding) => renderBinding(binding, gamma))}
+          {block.bindings.map((binding, i) =>
+            renderBinding(
+              binding,
+              gamma,
+              pushIndex(index, {
+                case: "block",
+                sub: { case: "binding", i, index: { case: "here" } },
+              })
+            )
+          )}
         </div>
-        <div className="body">{renderTerm(block.body, gamma)}</div>
+        <div className="body">
+          {renderTerm(
+            block.body,
+            gamma,
+            pushIndex(index, {
+              case: "block",
+              sub: { case: "body", index: { case: "here" } },
+            })
+          )}
+        </div>
       </div>
     );
   }
@@ -146,11 +217,14 @@ export default function Program() {
   function renderBinding(
     binding: Binding,
     gamma: Context,
-    index: BindingIndex
+    index: ModuleIndex
   ): JSX.Element {
     return (
       <div className="binding">
-        {renderLabel(binding.label)}
+        {renderLabel(
+          binding.label,
+          pushIndex(index, { case: "binding", sub: { case: "label" } })
+        )}
         {colon_punc}
         {renderType(binding.type, gamma)}
         {assign_punc}
@@ -162,7 +236,7 @@ export default function Program() {
   function renderType(
     type: Type,
     gamma: Context,
-    index: TypeIndex
+    index: ModuleIndex
   ): JSX.Element {
     switch (type.case) {
       case "arrow": {
@@ -177,7 +251,14 @@ export default function Program() {
         );
       }
       case "data": {
-        return <div className="type data">{renderLabel(type.label)}</div>;
+        return (
+          <div className="type data">
+            {renderLabel(
+              type.label,
+              pushIndex(index, { case: "data", sub: { case: "label" } })
+            )}
+          </div>
+        );
       }
       case "hole": {
         return <div className="type hole">{renderHoleTermId(type.holeId)}</div>;
@@ -188,7 +269,7 @@ export default function Program() {
   function renderTerm(
     term: Term,
     gamma: Context,
-    index: TermIndex
+    index: ModuleIndex
   ): JSX.Element {
     switch (term.case) {
       case "lambda": {
@@ -212,7 +293,10 @@ export default function Program() {
       case "neutral": {
         return (
           <div className="term neutral">
-            {renderLabel(term.applicant)}
+            {renderLabel(
+              term.applicant,
+              pushIndex(index, { case: "neutral", sub: { case: "applicant" } })
+            )}
             {lparen_punc}
             {term.args.map((arg) => renderTerm(arg, gamma))}
             {rparen_punc}
@@ -228,12 +312,15 @@ export default function Program() {
   function renderParameter(
     param: Parameter,
     gamma: Context,
-    index: ParameterIndex
+    index: ModuleIndex
   ): JSX.Element {
     return (
       <div className="parameter">
         {lparen_punc}
-        {renderLabel(param.label)}
+        {renderLabel(
+          param.label,
+          pushIndex(index, { case: "parameter", sub: { case: "label" } })
+        )}
         {colon_punc}
         {renderType(param.domain, gamma)}
         {rparen_punc}
@@ -241,7 +328,7 @@ export default function Program() {
     );
   }
 
-  function renderLabel(label: Label): JSX.Element {
+  function renderLabel(label: Label, index: Index): JSX.Element {
     return <div className="label">{label.value}</div>;
   }
 
@@ -249,7 +336,11 @@ export default function Program() {
     return <div className="holeId">?</div>;
   }
 
-  return <div className="Program">{(renderModule(module, Map()), focus)}</div>;
+  return (
+    <div className="Program">
+      {(renderModule(module, Map(), { case: "here" }), focus)}
+    </div>
+  );
 }
 
 function intercalate<A>(list: A[], sep: A): A[] {
