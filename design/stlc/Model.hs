@@ -1,8 +1,8 @@
 module Model where
 
-import Syntax
-import Data.Map ( Map )
+import Data.Map (Map)
 import Symbol
+import Syntax
 
 type Permutation = [Int]
 
@@ -30,7 +30,7 @@ insertAt :: [a] -> Int -> a -> [a]
 insertAt xs i x = take i xs ++ [x] ++ drop i xs
 
 applyAt :: [a] -> Int -> (a -> a) -> [a]
-applyAt xs i f = take i xs ++ [f (xs !! i)] ++ drop i xs
+applyAt xs i f = take i xs ++ [f (xs !! i)] ++ drop (i + 1) xs
 
 chType :: Type -> TypeChange -> Type
 chType (ArrowType params out) (InputChange (Input i c))
@@ -44,8 +44,8 @@ chType _ _ = error "shouldn't get here"
 
 -- convert arguments to a function of type T into arguments to a function of type (chType T change)
 chArgs :: [Term] -> Changes -> InputChange -> [Term]
-chArgs args gamma (Insert i p)
-    = insertAt (searchArgs gamma args) i (HoleTerm (newSymbol ()) undefined undefined)
+chArgs args gamma (Insert i p) =
+  insertAt (searchArgs gamma args) i (HoleTerm (newSymbol ()) undefined undefined)
 chArgs args gamma (Input i c) = searchArgs gamma (applyAt args i (\t -> chTerm t gamma c))
 chArgs args gamma (Delete i) = searchArgs gamma (deleteAt args i)
 chArgs args gamma (Permute p) = undefined
