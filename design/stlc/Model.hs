@@ -1,19 +1,18 @@
 module Model where
 
-import Syntax
-import Data.Map ( Map )
+import Data.Map (Map)
 import Symbol
+import Syntax
 
 type Permuation = [Int]
 
 -- Change to an argument list
-data Change =
-    Output Change |
-    Change Type |
-    InputChange InputChange
+data Change
+  = Output Change
+  | Change Type
+  | InputChange InputChange
 
 data InputChange = Input Int Change | Insert Int Parameter | Delete Int | Permute Permuation
-
 
 type Changes = Map Binding (Maybe Change) -- Nothing means deletion, Just change means do that change
 
@@ -25,11 +24,11 @@ insertAt :: [a] -> Int -> a -> [a]
 insertAt xs i x = take i xs ++ [x] ++ drop i xs
 
 applyAt :: [a] -> Int -> (a -> a) -> [a]
-applyAt xs i f = take i xs ++ [f (xs !! i)] ++ drop i xs
+applyAt xs i f = take i xs ++ [f (xs !! i)] ++ drop (i + 1) xs
 
 chType :: Type -> Change -> Type
-chType (ArrowType params out) (InputChange (Input i c))
-    = ArrowType (applyAt params i (\(name, t) -> (name, chType t c))) out
+chType (ArrowType params out) (InputChange (Input i c)) =
+  ArrowType (applyAt params i (\(name, t) -> (name, chType t c))) out
 chType (ArrowType params out) (Output (Change (BaseType b))) = ArrowType params b -- Should only change output to a base type!
 chType (ArrowType params out) (InputChange (Insert i t)) = ArrowType (insertAt params i t) out
 chType (ArrowType params out) (InputChange (Delete i)) = ArrowType (deleteAt params i) out
@@ -39,8 +38,8 @@ chType _ _ = error "shouldn't get here"
 
 -- convert arguments to a function of type T into arguments to a function of type (chType T change)
 chArgs :: [Term] -> Changes -> InputChange -> [Term]
-chArgs args gamma (Insert i p)
-    = insertAt (searchArgs gamma args) i (HoleTerm (newSymbol ()) undefined undefined)
+chArgs args gamma (Insert i p) =
+  insertAt (searchArgs gamma args) i (HoleTerm (newSymbol ()) undefined undefined)
 chArgs args gamma (Input i c) = searchArgs gamma (applyAt args i (\t -> chTerm t gamma c))
 chArgs args gamma (Delete i) = searchArgs gamma (deleteAt args i)
 chArgs args gamma (Permute p) = undefined
