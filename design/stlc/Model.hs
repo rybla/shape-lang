@@ -1,13 +1,11 @@
 module Model where
 
-import Data.Map (Map)
+import Data.Map (Map, lookup)
 import Symbol
 import Syntax
+import Prelude hiding (lookup)
 
 type Permutation = [Int]
-
-data Change = VariableTypeChange TypeChange | VariableDeletion | DataTypeDeletion
-    | DataTypeChange DataChange -- figure out
 
 -- Change to an argument list
 data TypeChange =
@@ -17,10 +15,15 @@ data TypeChange =
 
 data InputChange = Input Int TypeChange | Insert Int Parameter | Delete Int | Permute Permutation
 
-data DataChange = ConstructorPermute Permutation
+data DataConstructorChange = ConstructorPermute Permutation
     | DeleteConstructor Int | NewConstructor Int Constructor
 
-type Changes = Map Binding Change
+-- data Change = VariableTypeChange TypeChange | VariableDeletion | DataTypeDeletion
+    -- | DataTypeChange DataChange -- figure out
+data VarChange = VariableTypeChange TypeChange | VariableDeletion
+data DataChange = DataTypeDeletion | DataTypeChange DataChange
+
+type Changes = (Map Binding VarChange, Map Binding DataChange)
 
 -- Why arent these basic function in haskell's standard library?
 deleteAt :: [a] -> Int -> [a]
@@ -60,9 +63,46 @@ chTerm = undefined
 
 searchTerm :: Changes -> Term -> Term
 searchTerm gamma (LambdaTerm binds block) = undefined
-searchTerm gamma (NeutralTerm x args) = undefined
-searchTerm gamma (MatchTerm ty t cases) = undefined
-searchTerm gamma (HoleTerm h _ _) = undefined
+searchTerm gamma (NeutralTerm x args) = case lookup x (fst gamma) of
+  Nothing -> NeutralTerm x (searchArgs gamma args)
+  Just ch -> case ch of
+    (VariableTypeChange tc) -> case tc of
+      (Output tc') -> HoleTerm (newSymbol ()) undefined undefined -- Really, old args should go in hole?
+      (TypeReplace ty) -> HoleTerm (newSymbol ()) undefined undefined -- Really, old args should go in hole?
+      (InputChange ic) -> NeutralTerm x (chArgs args gamma ic)
+    VariableDeletion -> HoleTerm (newSymbol ()) undefined undefined
+searchTerm gamma (MatchTerm ty t cases) = case lookup ty (snd gamma) of
+  Nothing -> undefined -- use searchCases on cases and also searchTerm on t
+  Just dc -> case dc of
+    DataTypeDeletion -> HoleTerm (newSymbol ()) undefined undefined
+    (DataTypeChange dc') -> undefined -- call chCases?
+searchTerm gamma (HoleTerm h _ _) = undefined -- should gamma also have hole substitutions?
 
 -- TODO: reorder args of functions to make mapping easier
 -- TODO: Holes need to have values in them sometimes, e.g. when output is changed
+--      Whatever we do with buffers/holes/whatever, this should be handled by the model.
+--      This is because stuff in a buffer needs to be updated when an argument is added to a 
+--      function or whatever.
+
+{-
+
+Problem: suppose that we have a program like
+
+Data A
+let g : A -> B
+let f : B
+    f = g a
+
+Then the user deltes the type A.
+
+The algorithm will discover that g has a VarChange which is (Input 0 (TypeReplace (Hole ...)))
+So everywhere that g is called, this change will be in gamma, and it will cause the first arg
+of g to be dug.
+BUT then this needs to be applied inside the body of f.
+Even worse, g and f could have been defined in the opposite order, so g could be above f.
+
+searchBlock will have to be designed to deal with this case. It will need to first find all
+of the changes on each declaration, and only afterwards call searchTerm on the body of each
+declaration with those changes in gamma.
+
+-}
