@@ -1,34 +1,24 @@
 import { useDispatch, useSelector } from "react-redux";
 import "./Program.module.css";
-import { ProgramState } from "./programSlice";
-import {
-  Binding,
-  BindingIndex,
-  Block,
-  BlockIndex,
-  Constructor,
-  ConstructorIndex,
-  ConstructorSubIndex,
-  Context,
-  DataDefinitionIndex,
-  Index,
-  Label,
-  Mode,
-  Module,
-  ModuleIndex,
-  Parameter,
-  ParameterIndex,
-  pushIndex,
-  Statement,
-  StatementIndex,
-  Term,
-  TermIndex,
-  Type,
-  TypeIndex,
-  typeOfConstructor,
-} from "../../lang/syntax";
+import { Mode, ProgramState } from "./programSlice";
 import store from "../../app/store";
 import { Map } from "immutable";
+import {
+  Binding,
+  Case,
+  Constructor,
+  Context,
+  Definition,
+  Module,
+  Name,
+  Parameter,
+  Reference,
+  Term,
+  Type,
+  UniqueBinding,
+} from "../../lang/syntax";
+import { Index } from "../../lang";
+import { Format } from "../../lang/format";
 
 const data_punc = <span className="punctuation">data</span>;
 const alt_punc = <span className="punctuation">|</span>;
@@ -40,296 +30,91 @@ const assign_punc = <span className="punctuation">=</span>;
 const colon_punc = <span className="punctuation">:</span>;
 
 export default function Program() {
-  const module = useSelector<ProgramState, Module>((state) => state.module);
+  const module = useSelector<ProgramState, Format<Module>>(
+    (state) => state.module
+  );
   const mode = useSelector<ProgramState, Mode>((state) => state.mode);
-  const focus = useSelector<ProgramState, ModuleIndex>((state) => state.focus);
+  const focus = useSelector<ProgramState, Index<Module>>(
+    (state) => state.focus
+  );
   const dispatch = useDispatch<typeof store.dispatch>();
 
   function renderModule(
-    module: Module,
+    module: Format<Module>,
     gamma: Context,
-    index: ModuleIndex
+    index: Index<Module>
   ): JSX.Element {
-    module.statements.forEach((statement) => {
-      switch (statement.case) {
-        case "data definition": {
-          statement.constructors.forEach((constructor) => {
-            gamma = gamma.set(
-              constructor.label,
-              typeOfConstructor(statement.label, constructor)
-            );
-          });
-          break;
-        }
-        case "term definition": {
-          gamma = gamma.set(statement.label, statement.type);
-          break;
-        }
-      }
-    });
-    return (
-      <div className="module">
-        {module.statements.map((statement, i) =>
-          renderStatement(statement, gamma, {
-            case: "module",
-            i,
-            index: { case: "here" },
-          })
-        )}
-      </div>
-    );
+    throw new Error();
   }
-
-  function renderStatement(
-    statement: Statement,
+  function renderDefinition(
+    definition: Format<Definition>,
     gamma: Context,
-    index: ModuleIndex
+    index: Index<Module>
   ): JSX.Element {
-    switch (statement.case) {
-      case "data definition": {
-        return (
-          <div className="statement data-definition">
-            <div className="header">
-              {data_punc}
-              {renderLabel(
-                statement.label,
-                pushIndex(index, {
-                  case: "data definition",
-                  sub: { case: "label" },
-                })
-              )}
-              {assign_punc}
-            </div>
-            <div className="constructors">
-              {intersperseLeft(
-                statement.constructors.map((construtor, i) =>
-                  renderConstructor(
-                    construtor,
-                    gamma,
-                    pushIndex(index, {
-                      case: "constructor",
-                      sub: { case: "domain", i, index: { case: "here" } },
-                    })
-                  )
-                ),
-                alt_punc
-              )}
-            </div>
-          </div>
-        );
-      }
-      case "term definition": {
-        return (
-          <div className="statement term-definition">
-            {renderLabel(
-              statement.label,
-              pushIndex(index, {
-                case: "term definition",
-                sub: { case: "label" },
-              })
-            )}
-            {colon_punc}
-            {renderType(
-              statement.type,
-              gamma,
-              pushIndex(index, {
-                case: "term definition",
-                sub: { case: "type", index: { case: "here" } },
-              })
-            )}
-            {assign_punc}
-            {renderBlock(
-              statement.block,
-              gamma,
-              pushIndex(index, {
-                case: "term definition",
-                sub: { case: "term", index: { case: "here" } },
-              })
-            )}
-          </div>
-        );
-      }
-    }
+    throw new Error();
   }
-
   function renderConstructor(
-    constructor: Constructor,
+    constructor: Format<Constructor>,
     gamma: Context,
-    index: ModuleIndex
-  ): JSX.Element {
-    return (
-      <div className="constructor">
-        {renderLabel(
-          constructor.label,
-          pushIndex(index, { case: "constructor", sub: { case: "label" } })
-        )}
-        {colon_punc}
-        {constructor.domains.map((type, i) =>
-          renderType(
-            type,
-            gamma,
-            pushIndex(index, {
-              case: "constructor",
-              sub: { case: "domain", i, index: { case: "here" } },
-            })
-          )
-        )}
-      </div>
-    );
+    index: Index<Module>
+  ) {
+    throw new Error();
   }
-
-  function renderBlock(
-    block: Block,
-    gamma: Context,
-    index: ModuleIndex
-  ): JSX.Element {
-    block.bindings.forEach((binding) => {
-      gamma = gamma.set(binding.label, binding.type);
-    });
-    return (
-      <div className="block">
-        <div className="bindings">
-          {block.bindings.map((binding, i) =>
-            renderBinding(
-              binding,
-              gamma,
-              pushIndex(index, {
-                case: "block",
-                sub: { case: "binding", i, index: { case: "here" } },
-              })
-            )
-          )}
-        </div>
-        <div className="body">
-          {renderTerm(
-            block.body,
-            gamma,
-            pushIndex(index, {
-              case: "block",
-              sub: { case: "body", index: { case: "here" } },
-            })
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  function renderBinding(
-    binding: Binding,
-    gamma: Context,
-    index: ModuleIndex
-  ): JSX.Element {
-    return (
-      <div className="binding">
-        {renderLabel(
-          binding.label,
-          pushIndex(index, { case: "binding", sub: { case: "label" } })
-        )}
-        {colon_punc}
-        {renderType(binding.type, gamma)}
-        {assign_punc}
-        {renderTerm(binding.term, gamma)}
-      </div>
-    );
-  }
-
   function renderType(
-    type: Type,
+    type: Format<Type>,
     gamma: Context,
-    index: ModuleIndex
+    index: Index<Module>
   ): JSX.Element {
-    switch (type.case) {
-      case "arrow": {
-        return (
-          <div className="type arrow">
-            {intersperseRight(
-              type.domains.map((type) => renderType(type, gamma)),
-              arrow_punc
-            )}
-            {renderType(type.codomain, gamma)}
-          </div>
-        );
-      }
-      case "data": {
-        return (
-          <div className="type data">
-            {renderLabel(
-              type.label,
-              pushIndex(index, { case: "data", sub: { case: "label" } })
-            )}
-          </div>
-        );
-      }
-      case "hole": {
-        return <div className="type hole">{renderHoleTermId(type.holeId)}</div>;
-      }
-    }
+    throw new Error();
   }
-
   function renderTerm(
-    term: Term,
+    term: Format<Term>,
     gamma: Context,
-    index: ModuleIndex
+    index: Index<Module>
   ): JSX.Element {
-    switch (term.case) {
-      case "lambda": {
-        let gammaBody = gamma;
-        term.parameters.forEach(
-          (param) => (gammaBody = gammaBody.set(param.label, param.domain))
-        );
-        return (
-          <div className="term lambda">
-            {lparen_punc}
-            {intercalate(
-              term.parameters.map((param) => renderParameter(param, gamma)),
-              comma_punc
-            )}
-            {rparen_punc}
-            {arrow_punc}
-            {renderBlock(term.body, gammaBody)}
-          </div>
-        );
-      }
-      case "neutral": {
-        return (
-          <div className="term neutral">
-            {renderLabel(
-              term.applicant,
-              pushIndex(index, { case: "neutral", sub: { case: "applicant" } })
-            )}
-            {lparen_punc}
-            {term.args.map((arg) => renderTerm(arg, gamma))}
-            {rparen_punc}
-          </div>
-        );
-      }
-      case "hole": {
-        return <div className="term hole">{renderHoleTermId(term.holeId)}</div>;
-      }
-    }
+    throw new Error();
   }
-
+  function renderCase(
+    case_: Format<Case>,
+    gamma: Context,
+    index: Index<Module>
+  ): JSX.Element {
+    throw new Error();
+  }
   function renderParameter(
-    param: Parameter,
+    param: Format<Parameter>,
     gamma: Context,
-    index: ModuleIndex
+    index: Index<Module>
   ): JSX.Element {
-    return (
-      <div className="parameter">
-        {lparen_punc}
-        {renderLabel(
-          param.label,
-          pushIndex(index, { case: "parameter", sub: { case: "label" } })
-        )}
-        {colon_punc}
-        {renderType(param.domain, gamma)}
-        {rparen_punc}
-      </div>
-    );
+    throw new Error();
   }
-
-  function renderLabel(label: Label, index: Index): JSX.Element {
-    return <div className="label">{label.value}</div>;
+  function renderUniqueBinding(
+    binding: Format<UniqueBinding>,
+    gamma: Context,
+    index: Index<Module>
+  ): JSX.Element {
+    throw new Error();
+  }
+  function renderBinding(
+    binding: Format<Binding>,
+    gamma: Context,
+    index: Index<Module>
+  ): JSX.Element {
+    throw new Error();
+  }
+  function renderName(
+    name: Format<Name>,
+    gamma: Context,
+    index: Index<Module>
+  ): JSX.Element {
+    throw new Error();
+  }
+  function renderReference(
+    reference: Format<Reference>,
+    gamma: Context,
+    index: Index<Module>
+  ): JSX.Element {
+    throw new Error();
   }
 
   function renderHoleTermId(holeId: Symbol): JSX.Element {
