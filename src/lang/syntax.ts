@@ -15,6 +15,8 @@ export type Syntax =
 
 // Block
 
+export type Program = Block
+
 export type Block = {
   case: "block",
   definitions: Definition[],
@@ -24,6 +26,13 @@ export type Block = {
 // Definition
 
 export type Definition = DataDefinition | TermDefinition
+
+export type TermDefinition = {
+  case: "term definition",
+  binding: UniqueBinding,
+  type: Type,
+  term: Term
+}
 
 export type DataDefinition = {
   case: "data definition",
@@ -44,16 +53,10 @@ export const typeOfConstructor = (dataRef: Reference, constructor: Constructor):
       output: {case: "data", reference: dataRef}
   })
 
-export type TermDefinition = {
-  case: "term definition",
-  binding: UniqueBinding,
-  type: Type,
-  term: Term
-}
-
 // Type
 
-export type Type = ArrowType | DataType | HoleType
+export type Type = ArrowType | BaseType
+export type BaseType = DataType | HoleType
 
 export type ArrowType = {
   case: "arrow",
@@ -96,13 +99,13 @@ export type MatchTerm = {
 
 export type Case = {
   case: "case",
-  ids: Id[],
+  bindings: Binding[],
   block: Block
 }
 
 export type HoleTerm = {
   case: "hole",
-  holeId: Symbol,
+  holeId: HoleId,
   weakening: Weakening,
   substitution: Substitution<Name, Term>
 }
