@@ -17,3 +17,5 @@ export type Format<S extends Syntax> =
 export function defaultFormat<S extends Syntax>(syntax: S): Format<S> {
   throw new Error()
 }
+
+export function unformat<S extends Syntax>(formattedSyntax: Format<S>): S {throw new Error()}
