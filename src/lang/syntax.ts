@@ -8,14 +8,19 @@ export type Syntax =
   | Constructor
   | Type
   | Term
+  | Case
   | Parameter
   | Binding
+  | UniqueBinding
   | Name
   | Reference
 
-// Block
+// Module
 
-export type Program = Block
+// The `Module` is the top-level block.
+export type Module = Block
+
+// Block
 
 export type Block = {
   case: "block",
@@ -29,7 +34,7 @@ export type Definition = DataDefinition | TermDefinition
 
 export type TermDefinition = {
   case: "term definition",
-  binding: UniqueBinding,
+  uniqueBinding: UniqueBinding,
   type: Type,
   term: Term
 }
@@ -42,7 +47,7 @@ export type DataDefinition = {
 
 export type Constructor = {
   case: "constructor",
-  binding: UniqueBinding,
+  uniqueBinding: UniqueBinding,
   parameters: Parameter[]
 }
 
@@ -151,6 +156,12 @@ export type Id = Symbol
 export type HoleId = Symbol
 
 // Fresh
+
+export function freshBlock(): Block {throw new Error()}
+export function freshHoleTerm(): HoleTerm {throw new Error()}
+export function freshHoleType(): HoleType {throw new Error()}
+export function freshId(): Id {throw new Error()}
+export function freshName(): Name {throw new Error()}
 
 // export function freshName(): Name {
 //   return ""
