@@ -13,9 +13,14 @@ data TypeChange =
     TypeReplace Type |
     InputChange InputChange
 
--- data TypeChange' = TypeReplace' Type | Nothing' | Recurse' InputChange' TypeChange'
+data TypeChange' = TypeReplace' Type | Nothing' | ArrowChange [InputChange'] TypeChange'
+data InputChange' = Change TypeChange' Int | Insert'
 -- data InputChange' = 
-type TypeChange' = [TypeChange]
+
+-- Example:
+-- (A,B,C)->D
+-- (A,C,?)->D
+-- ArrowChange [Change Nothing 0, Change Nothing 2, Insert] Nothing
 
 data InputChange = Input Int TypeChange | Insert Int Parameter | Delete Int | Permute Permutation
 

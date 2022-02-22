@@ -1,0 +1,11 @@
+Things the model needs to do:
+
+- Apply a type change at an index in a term (recursive changes as a result)
+- Get the "code" at an index (Copy)
+    - needs term, type context
+- Take a "code" and put it into a buffer (Paste)
+    - needs to put into holes everything that isn't in context
+- Get context for a term given an index
+- Introduce new variable into buffer
+    - (The neutral form with given variable on the left, and holes on right)
+- 
