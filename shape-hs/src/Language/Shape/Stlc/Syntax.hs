@@ -12,7 +12,7 @@ data Definition
 
 data Constructor = Constructor UniqueBinding [Parameter]
 
-data BaseType = DataType Reference | HoleType Hole
+data BaseType = DataType Reference | HoleType Hole [Id]
 
 data Type
   = ArrowType [Parameter] BaseType
@@ -25,13 +25,14 @@ data Term
       Reference -- type of term to match on (must be a DataType)
       Term -- term to match on
       [Case] -- cases of matched term
-  | HoleTerm Hole Weakening Substitution
+  | HoleTerm Hole [(Type, Term)]
 
 data Case
   = Case
       Reference -- to the `Constructor`
       [Binding] -- instances of the `Constructor`'s `Parameter`s
       Block
+      -- really just a lambda term
 
 -- Parameter, Binding, UniqueBinding
 

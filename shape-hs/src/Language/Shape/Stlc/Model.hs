@@ -13,15 +13,19 @@ data TypeChange =
     TypeReplace Type |
     InputChange InputChange
 
+-- data TypeChange' = TypeReplace' Type | Nothing' | Recurse' InputChange' TypeChange'
+-- data InputChange' = 
+type TypeChange' = [TypeChange]
+
 data InputChange = Input Int TypeChange | Insert Int Parameter | Delete Int | Permute Permutation
 
 data DataConstructorChange = ConstructorPermute Permutation
-    | DeleteConstructor Int | NewConstructor Int Constructor
+    | DeleteConstructorChange InputChange | NewConstructor Int Constructor | DeleteConstructor Int
 
 -- data Change = VariableTypeChange TypeChange | VariableDeletion | DataTypeDeletion
     -- | DataTypeChange DataChange -- figure out
 data VarChange = VariableTypeChange TypeChange | VariableDeletion
-data DataChange = DataTypeDeletion | DataTypeChange DataChange
+data DataChange = DataTypeDeletion | DataTypeChange DataConstructorChange
 
 type Changes = (Map Binding VarChange, Map Binding DataChange)
 
@@ -48,8 +52,8 @@ chType _ _ = error "shouldn't get here"
 -- convert arguments to a function of type T into arguments to a function of type (chType T change)
 chArgs :: [Term] -> Changes -> InputChange -> [Term]
 chArgs args gamma (Insert i p) =
-  insertAt (searchArgs gamma args) i (HoleTerm (newSymbol ()) undefined undefined)
-chArgs args gamma (Input i c) = searchArgs gamma (applyAt args i (\t -> chTerm t gamma c))
+  insertAt (searchArgs gamma args) i (HoleTerm (newSymbol ()) [undefined {-args-}])
+chArgs args gamma (Input i c) = searchArgs gamma (applyAt args i (chTerm gamma c))
 chArgs args gamma (Delete i) = searchArgs gamma (deleteAt args i)
 chArgs args gamma (Permute p) = undefined
 
@@ -57,9 +61,10 @@ searchArgs :: Changes -> [Term] -> [Term]
 searchArgs gamma = map (searchTerm gamma)
 
 -- Convert a term of type T into a term of type (chType T change)
-chTerm :: Term -> Changes -> TypeChange -> Term
+chTerm :: Changes -> TypeChange -> Term -> Term
 chTerm = undefined
 -- chTerm is what will actually introduce stuff into Changes
+-- If input Term is a hole, don't do anything to it (except search with gamma)
 
 searchTerm :: Changes -> Term -> Term
 searchTerm gamma (LambdaTerm binds block) = undefined
@@ -67,16 +72,16 @@ searchTerm gamma (NeutralTerm x args) = case lookup x (fst gamma) of
   Nothing -> NeutralTerm x (searchArgs gamma args)
   Just ch -> case ch of
     (VariableTypeChange tc) -> case tc of
-      (Output tc') -> HoleTerm (newSymbol ()) undefined undefined -- Really, old args should go in hole?
-      (TypeReplace ty) -> HoleTerm (newSymbol ()) undefined undefined -- Really, old args should go in hole?
+      (Output tc') -> HoleTerm (newSymbol ()) [undefined {-NeutralTerm x args-}]
+      (TypeReplace ty) -> HoleTerm (newSymbol ()) [undefined {-Var x-} {-args...-}] -- put args and var in buffer
       (InputChange ic) -> NeutralTerm x (chArgs args gamma ic)
-    VariableDeletion -> HoleTerm (newSymbol ()) undefined undefined
+    VariableDeletion -> HoleTerm (newSymbol ()) [undefined {-args...-}] -- put args in buffer
 searchTerm gamma (MatchTerm ty t cases) = case lookup ty (snd gamma) of
   Nothing -> undefined -- use searchCases on cases and also searchTerm on t
   Just dc -> case dc of
-    DataTypeDeletion -> HoleTerm (newSymbol ()) undefined undefined
+    DataTypeDeletion -> HoleTerm (newSymbol ()) []
     (DataTypeChange dc') -> undefined -- call chCases?
-searchTerm gamma (HoleTerm h _ _) = undefined -- should gamma also have hole substitutions?
+searchTerm gamma (HoleTerm h buffer) = undefined -- should gamma also have hole substitutions?
 
 -- TODO: reorder args of functions to make mapping easier
 -- TODO: Holes need to have values in them sometimes, e.g. when output is changed
@@ -104,5 +109,36 @@ Even worse, g and f could have been defined in the opposite order, so g could be
 searchBlock will have to be designed to deal with this case. It will need to first find all
 of the changes on each declaration, and only afterwards call searchTerm on the body of each
 declaration with those changes in gamma.
+
+-}
+
+{-
+
+TODO: need to rework changes:
+
+Suppose that I have
+data Nat = Nat Bla
+
+
+data Bla = Bla Nat
+
+f : Nat -> (Nat -> Nat) -> Nat
+n : Nat
+
+Then I delete Nat.
+
+
+... f a g ...
+
+f n  ~~> f {{n}}
+
+-}
+
+{-
+
+f : ?
+f = ?
+g : ?
+g = ?
 
 -}
