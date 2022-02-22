@@ -1,6 +1,6 @@
-import { ArrowType, Binding, Block, Case, Constructor, DataDefinition, DataType, Definition, HoleTerm, HoleType, LambdaTerm, MatchTerm, Name, NeutralTerm, Parameter, Reference, Syntax, Term, TermDefinition, Type, UniqueBinding } from "./syntax";
+import { ArrowType, Block, Case, Constructor, DataDefinition, DataType, Definition, Label, LambdaTerm, MatchTerm, Name, NeutralTerm, Parameter, Syntax, Term, TermBinding, TermDefinition, TermReference, Type, TypeBinding, TypeReference, UniqueTermBinding } from "./syntax";
 
-type IndexStepable = 
+export type IndexStepable = 
   | Block
   | Definition
   | Constructor
@@ -8,11 +8,13 @@ type IndexStepable =
   | Term
   | Case
   | Parameter
-type IndexTerminal =
-  | Binding
-  | UniqueBinding
-  | Name
-  | Reference
+export type IndexTerminal =
+  | Label
+  | TermBinding
+  | UniqueTermBinding
+  | TypeBinding
+  | TermReference
+  | TypeReference
 
 export type IndexHere = {case: "here"}
 export const here: IndexHere = {case: "here"}
@@ -28,45 +30,85 @@ export type IndexStep<S extends Syntax, Key extends keyof S> =
 // If only I could write generative sum types...
 export type Index<S extends Syntax> = 
   | IndexHere
-  | // Block
-    (
+  | ( // Block
       S extends Block ? 
         ( IndexStep<Block, "definitions">
         | IndexStep<Block, "body"> ) :
       S extends Definition ?
-        ( IndexStep<TermDefinition, "uniqueBinding"> 
+        ( IndexStep<TermDefinition, "uniqueTermBinding"> 
         | IndexStep<TermDefinition, "type"> 
         | IndexStep<TermDefinition, "term">
-        | IndexStep<DataDefinition, "id">
+        | IndexStep<DataDefinition, "typeBinding">
         | IndexStep<DataDefinition, "constructors"> ) :
       S extends Constructor ?
-        ( IndexStep<Constructor, "uniqueBinding"> 
+        ( IndexStep<Constructor, "uniqueTermBinding"> 
         | IndexStep<Constructor, "parameters"> ) :
       S extends Type ?
         ( IndexStep<ArrowType, "parameters">
-        | IndexStep<ArrowType, "output"> ) :
+        | IndexStep<ArrowType, "output"> 
+        | IndexStep<DataType, "typeReference"> ) :
       S extends Term ?
         // LambdaTerm
-        ( IndexStep<LambdaTerm, "ids">
+        ( IndexStep<LambdaTerm, "termBindings">
         | IndexStep<LambdaTerm, "block">
         // NeutralTerm
-        | IndexStep<NeutralTerm, "reference">
+        | IndexStep<NeutralTerm, "termReference">
         | IndexStep<NeutralTerm, "args"> 
         // MatchTerm
-        | IndexStep<MatchTerm, "reference">
+        | IndexStep<MatchTerm, "typeReference">
         | IndexStep<MatchTerm, "term">
         | IndexStep<MatchTerm, "cases"> ) :
       S extends Case ?
-        ( IndexStep<Case, "bindings">
+        ( IndexStep<Case, "termBindings">
+        | IndexStep<Case, "termReference">
         | IndexStep<Case, "block"> ) :
       S extends Parameter ?
-        ( IndexStep<Parameter, "name">
+        ( IndexStep<Parameter, "label">
         | IndexStep<Parameter, "type"> ) :
-      S extends UniqueBinding ? IndexHere :
-      S extends Binding ? IndexHere :
-      S extends Reference ? IndexHere :
+      S extends UniqueTermBinding ? IndexHere :
+      S extends TermBinding ? IndexHere :
+      S extends TypeBinding ? IndexHere :
+      S extends TermReference ? IndexHere :
+      S extends TypeReference ? IndexHere :
       S extends Name ? IndexHere :
       never
     )
     
-export function concatIndex<S1 extends Syntax, S2 extends Syntax>(i1: Index<S1>, i2: Index<S2>): Index<S1> {throw new Error()}
+export function concatIndex<S1 extends IndexStepable, S2 extends IndexStepable>(index1: Index<S1>, index2: Index<S2>): Index<S1> {
+  // throw new Error("umimplemented: concatIndex")
+  switch (index1.case) {
+    case "definitions":
+    case "type":
+    case "term":
+    case "constructors":
+    case "parameters":
+    case "output":
+    case "args":
+    case "cases":
+    case "block":
+    case "body":
+      return {...index1, index: concatIndex(index1.index, index2)}
+    case "here":
+      return index2 as Index<S1>
+    default: throw new Error("could not concatIndex for " + index1.case)
+  }
+}
+
+// export function pushIndexStep<S1 extends IndexStepable, S2 extends IndexStepable>(index: Index<S1>, step: Index<S2>["case"]): Index<S1> {
+//   switch (index.case) {
+//     case "definitions":
+//     case "type":
+//     case "term":
+//     case "constructors":
+//     case "parameters":
+//     case "output":
+//     case "args":
+//     case "cases":
+//     case "block":
+//     case "body":
+//       return {...index, index: pushIndexStep(index.index, step)}
+//     case "here":
+//       return {case: step as Index<S2>["case"], index: here}
+//   }
+//   throw new Error("could not pushIndexStep for " + index.case)
+// }
