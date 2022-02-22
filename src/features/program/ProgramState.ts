@@ -1,48 +1,167 @@
 import { Record } from "immutable";
 import { here, Index } from "../../lang";
 import { defaultFormat, Format } from "../../lang/format";
-import { Block, freshHoleTerm, freshHoleType, freshId, Module } from "../../lang/syntax";
+import { freshHoleTerm, freshId, Module } from "../../lang/syntax";
 // export default programSlice
 
 // ProgramState
 
 export type ProgramProps = {
-  module: Format<Block>,
-  focus: Index<Block>,
-  mode: Mode
-}
+  module: Format<Module>;
+  focus: Index<Module>;
+  mode: Mode;
+};
 
-export type Mode = 
-  | {case: "edit"}
-  | {case: "label"}
+export type Mode = { case: "edit" } | { case: "label" };
 
-const n: Symbol = Symbol()
+const zero: Symbol = Symbol()
+const suc: Symbol = Symbol()
+const idNat_n: Symbol = Symbol();
+const addNat_m: Symbol = Symbol();
+const addNat_n: Symbol = Symbol();
 const initialModule: Module = {
-  case: "block",
+  case: "module",
   definitions: [
     {
       case: "data definition",
-      typeBinding: {case: "type binding", name: "Nat"},
+      typeBinding: { case: "type binding", name: "Nat" },
       constructors: [
-        {case: "constructor", uniqueTermBinding: {case: "unique term binding", name: "zero", id: Symbol()}, parameters: []},
-        {case: "constructor", uniqueTermBinding: {case: "unique term binding", name: "suc", id: Symbol()}, parameters: [{case: "parameter", label: {case: "label", name: "n"}, type: {case: "data", typeReference: {case: "type reference", name: "Nat"}}}]}
-      ]
+        {
+          case: "constructor",
+          uniqueTermBinding: {
+            case: "unique term binding",
+            name: "zero",
+            id: zero,
+          },
+          parameters: [],
+        },
+        {
+          case: "constructor",
+          uniqueTermBinding: {
+            case: "unique term binding",
+            name: "suc",
+            id: suc,
+          },
+          parameters: [
+            {
+              case: "parameter",
+              label: { case: "label", name: "idNat" },
+              type: {
+                case: "data",
+                typeReference: { case: "type reference", name: "Nat" },
+              },
+            },
+          ],
+        },
+      ],
     },
     {
       case: "term definition",
-      uniqueTermBinding: {case: "unique term binding", id: freshId(), name: "idNat"},
-      type: {case: "arrow", parameters: [{case: "parameter", label: {case: "label", name: "n"}, type: {case: "data", typeReference: {case: "type reference", name: "Nat"}}}], output: {case: "data", typeReference: {case: "type reference", name: "Nat"}}},
-      term: {case: "lambda", termBindings: [{case: "term binding", id: n}], block: {case: "block", definitions: [], body: {case: "neutral", termReference: {case: "term reference", id: n}, args: []}, type: {case: "data", typeReference: {case: "type reference", name: "Nat"}}}}}
+      uniqueTermBinding: {
+        case: "unique term binding",
+        id: freshId(),
+        name: "idNat",
+      },
+      type: {
+        case: "arrow",
+        parameters: [
+          {
+            case: "parameter",
+            label: { case: "label", name: "idNat" },
+            type: {
+              case: "data",
+              typeReference: { case: "type reference", name: "Nat" },
+            },
+          },
+        ],
+        output: {
+          case: "data",
+          typeReference: { case: "type reference", name: "Nat" },
+        },
+      },
+      term: {
+        case: "lambda",
+        termBindings: [{ case: "term binding", id: idNat_n }],
+        block: {
+          case: "block",
+          definitions: [],
+          term: {
+            case: "match",
+            typeReference: { case: "type reference", name: "Nat" },
+            term: {
+              case: "neutral",
+              termReference: { case: "term reference", id: idNat_n },
+              args: [],
+            },
+            cases: [
+              {
+                case: "case",
+                termReference: {case: "term reference", id: zero},
+                termBindings: [],
+                block: {
+                  case: "block",
+                  definitions: [],
+                  term: {case: "neutral", termReference: {case: "term reference", id: idNat_n}, args: []}
+                }
+              }
+            ],
+          },
+        },
+      },
+    },
+    {
+      case: "term definition",
+      uniqueTermBinding: {
+        case: "unique term binding",
+        id: freshId(),
+        name: "addNat",
+      },
+      type: {
+        case: "arrow",
+        parameters: [
+          {
+            case: "parameter",
+            label: { case: "label", name: "m" },
+            type: {
+              case: "data",
+              typeReference: { case: "type reference", name: "Nat" },
+            },
+          },
+          {
+            case: "parameter",
+            label: { case: "label", name: "idNat" },
+            type: {
+              case: "data",
+              typeReference: { case: "type reference", name: "Nat" },
+            },
+          },
+        ],
+        output: {
+          case: "data",
+          typeReference: { case: "type reference", name: "Nat" },
+        },
+      },
+      term: {
+        case: "lambda",
+        termBindings: [
+          { case: "term binding", id: addNat_m },
+          { case: "term binding", id: addNat_n },
+        ],
+        block: {
+          case: "block",
+          definitions: [],
+          term: freshHoleTerm(),
+        },
+      },
+    },
   ],
-  body: freshHoleTerm(),
-  type: freshHoleType()
-}
+};
 
 export const defaultProgramProps: ProgramProps = {
   module: defaultFormat(initialModule),
   focus: here,
-  mode: {case: "edit"}
-}
+  mode: { case: "edit" },
+};
 
 export class ProgramState extends Record(defaultProgramProps) {}
 
@@ -125,4 +244,3 @@ export class ProgramState extends Record(defaultProgramProps) {}
 // export type NavigationDirection = "up" | "down" | "left" | "right" | "next" | "previous" | "top"
 
 // export function moveIndex<S1 extends Syntax, S2 extends Syntax>(s: S1, index: Index<S1>, direction: NavigationDirection): S2 {throw new Error()}
-

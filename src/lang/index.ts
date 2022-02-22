@@ -1,6 +1,7 @@
-import { ArrowType, Block, Case, Constructor, DataDefinition, DataType, Definition, Label, LambdaTerm, MatchTerm, Name, NeutralTerm, Parameter, Syntax, Term, TermBinding, TermDefinition, TermReference, Type, TypeBinding, TypeReference, UniqueTermBinding } from "./syntax";
+import { ArrowType, Block, Case, Constructor, DataDefinition, DataType, Definition, Label, LambdaTerm, MatchTerm, Module, Name, NeutralTerm, Parameter, Syntax, Term, TermBinding, TermDefinition, TermReference, Type, TypeBinding, TypeReference, UniqueTermBinding } from "./syntax";
 
 export type IndexStepable = 
+  | Module
   | Block
   | Definition
   | Constructor
@@ -30,10 +31,12 @@ export type IndexStep<S extends Syntax, Key extends keyof S> =
 // If only I could write generative sum types...
 export type Index<S extends Syntax> = 
   | IndexHere
-  | ( // Block
+  | ( // Module
+      S extends Module ? IndexStep<Module, "definitions"> :
+      // Block
       S extends Block ? 
         ( IndexStep<Block, "definitions">
-        | IndexStep<Block, "body"> ) :
+        | IndexStep<Block, "term"> ) :
       S extends Definition ?
         ( IndexStep<TermDefinition, "uniqueTermBinding"> 
         | IndexStep<TermDefinition, "type"> 
@@ -86,7 +89,6 @@ export function concatIndex<S1 extends IndexStepable, S2 extends IndexStepable>(
     case "args":
     case "cases":
     case "block":
-    case "body":
       return {...index1, index: concatIndex(index1.index, index2)}
     case "here":
       return index2 as Index<S1>

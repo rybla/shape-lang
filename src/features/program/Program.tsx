@@ -1,14 +1,21 @@
 import styles from "./Program.module.css";
 import { ProgramState } from "./ProgramState";
 import {
+  addConstructor,
+  addTermBinding,
+  addTypeName,
+  addUniqueTermBinding,
   ArrowType,
+  Block,
   Case,
   Constructor,
   Context,
   Definition,
   emptyContext,
   Label,
+  LambdaTerm,
   Module,
+  Name,
   Parameter,
   Term,
   TermBinding,
@@ -21,7 +28,6 @@ import {
 } from "../../lang/syntax";
 import { concatIndex, here, Index } from "../../lang";
 import { defaultFormat, Format, unformat } from "../../lang/format";
-import { infer } from "../../lang/typing";
 
 const data_keyword = <span className={styles.keyword}>data</span>;
 const match_keyword = <span className={styles.keyword}>match</span>;
@@ -37,53 +43,75 @@ const colon_punctuation = <span className={styles.punctuation}>:</span>;
 export default function Program() {
   var programState: ProgramState = new ProgramState();
 
-  function renderBlock(
-    block: Format<Module>,
-    gamma: Context,
-    index: Index<Module>,
-    isModule: boolean = false
-  ): JSX.Element {
-    console.log("render block");
-    block.definitions.forEach((definition) => {
+  function renderModule(module_: Format<Module>): JSX.Element {
+    let gamma: Context = emptyContext();
+    module_.definitions.forEach((definition) => {
       switch (definition.case) {
         case "term definition": {
-          gamma = {
-            ...gamma,
-            nameTypes: gamma.nameTypes.set(
-              definition.uniqueTermBinding.name,
-              definition.type
-            ),
-            idNames: gamma.idNames.set(
-              definition.uniqueTermBinding.id,
-              definition.uniqueTermBinding.name
-            ),
-          };
+          gamma = addUniqueTermBinding(
+            gamma,
+            definition.uniqueTermBinding,
+            definition.type
+          );
           break;
         }
         case "data definition": {
+          gamma = addTypeName(gamma, definition.typeBinding.name);
           definition.constructors.forEach(
             (constructor) =>
-              (gamma = {
-                ...gamma,
-                nameTypes: gamma.nameTypes.set(
-                  constructor.uniqueTermBinding.name,
-                  typeOfConstructor(
-                    {
-                      case: "type reference",
-                      name: definition.typeBinding.name,
-                    },
-                    constructor
-                  )
-                ),
-              })
+              (gamma = addConstructor(
+                gamma,
+                definition.typeBinding.name,
+                constructor
+              ))
           );
         }
       }
     });
     return (
-      <div
-        className={isModule ? `${styles.module} ${styles.block}` : styles.block}
-      >
+      <div className={styles.block}>
+        {module_.definitions.map((definition, i) =>
+          renderDefinition(definition, gamma, {
+            case: "definitions",
+            i,
+            index: here,
+          })
+        )}
+      </div>
+    );
+  }
+
+  function renderBlock(
+    block: Format<Block>,
+    gamma: Context,
+    type: Type,
+    index: Index<Module>
+  ): JSX.Element {
+    console.log("render block");
+    block.definitions.forEach((definition) => {
+      switch (definition.case) {
+        case "term definition": {
+          gamma = addUniqueTermBinding(
+            gamma,
+            definition.uniqueTermBinding,
+            type
+          );
+          break;
+        }
+        case "data definition": {
+          definition.constructors.forEach(
+            (constructor) =>
+              (gamma = addConstructor(
+                gamma,
+                definition.typeBinding.name,
+                constructor
+              ))
+          );
+        }
+      }
+    });
+    return (
+      <div className={styles.block}>
         {block.definitions.map((definition, i) =>
           renderDefinition(
             definition,
@@ -92,10 +120,10 @@ export default function Program() {
           )
         )}
         {renderTerm(
-          block.body,
+          block.term,
           gamma,
-          block.type,
-          concatIndex(index, { case: "body", index: here })
+          type,
+          concatIndex(index, { case: "term", index: here })
         )}
       </div>
     );
@@ -108,28 +136,90 @@ export default function Program() {
     console.log("render definition");
     switch (definition.case) {
       case "term definition": {
-        return (
-          <div className={`${styles.termDefinition} ${styles.definition}`}>
-            {renderUniqueTermBinding(
-              definition.uniqueTermBinding,
-              gamma,
-              concatIndex(index, { case: "uniqueTermBinding", index: here })
-            )}
-            {colon_punctuation}
-            {renderType(
-              definition.type,
-              gamma,
-              concatIndex(index, { case: "type", index: here })
-            )}
-            {assign_punctuation}
-            {renderTerm(
-              definition.term,
-              gamma,
-              definition.type,
-              concatIndex(index, { case: "term", index: here })
-            )}
-          </div>
-        );
+        switch (definition.type.case) {
+          case "arrow": {
+            let arrow: ArrowType = definition.type;
+            let lambda: LambdaTerm = definition.term as LambdaTerm;
+            let gammaBlock: Context = gamma;
+            lambda.termBindings.forEach((termBinding, i) => {
+              gammaBlock = addTermBinding(
+                gammaBlock,
+                termBinding,
+                arrow.parameters[i].label.name,
+                arrow.parameters[i].type
+              );
+            });
+            return (
+              <div className={`${styles.termDefinition} ${styles.definition}`}>
+                {renderUniqueTermBinding(
+                  definition.uniqueTermBinding,
+                  gamma,
+                  concatIndex(index, { case: "uniqueTermBinding", index: here })
+                )}
+                {lparen_punctuation}
+                {intercalate(
+                  arrow.parameters.map((param, i) =>
+                    renderParameter(
+                      param,
+                      gamma,
+                      concatIndex(index, {
+                        case: "type",
+                        index: { case: "parameters", i, index: here },
+                      })
+                    )
+                  ),
+                  comma_punctuation
+                )}
+                {rparen_punctuation}
+                {colon_punctuation}
+                {renderType(
+                  arrow.output,
+                  gamma,
+                  concatIndex(index, {
+                    case: "type",
+                    index: { case: "output", index: here },
+                  })
+                )}
+                {assign_punctuation}
+                {renderBlock(
+                  lambda.block,
+                  gammaBlock,
+                  arrow.output,
+                  concatIndex(index, {
+                    case: "term",
+                    index: { case: "block", index: here },
+                  })
+                )}
+              </div>
+            );
+          }
+          case "data":
+          case "hole": {
+            return (
+              <div className={`${styles.termDefinition} ${styles.definition}`}>
+                {renderUniqueTermBinding(
+                  definition.uniqueTermBinding,
+                  gamma,
+                  concatIndex(index, { case: "uniqueTermBinding", index: here })
+                )}
+                {colon_punctuation}
+                {renderType(
+                  definition.type,
+                  gamma,
+                  concatIndex(index, { case: "type", index: here })
+                )}
+                {assign_punctuation}
+                {renderTerm(
+                  definition.term,
+                  gamma,
+                  definition.type,
+                  concatIndex(index, { case: "term", index: here })
+                )}
+              </div>
+            );
+          }
+        }
+        break;
       }
       case "data definition": {
         return (
@@ -143,7 +233,7 @@ export default function Program() {
             {assign_punctuation}
             {definition.constructors.map((constructor, i) =>
               renderConstructor(
-                { case: "type reference", name: definition.typeBinding.name },
+                definition.typeBinding.name,
                 constructor,
                 {
                   ...gamma,
@@ -158,7 +248,7 @@ export default function Program() {
     }
   }
   function renderConstructor(
-    typeReference: TypeReference,
+    name: Name,
     constructor: Format<Constructor>,
     gamma: Context,
     index: Index<Module>
@@ -175,7 +265,7 @@ export default function Program() {
         {colon_punctuation}
         {renderType(
           defaultFormat(
-            typeOfConstructor(typeReference, unformat<Constructor>(constructor))
+            typeOfConstructor(name, unformat<Constructor>(constructor))
           ),
           gamma,
           concatIndex(index, { case: "type", index: here })
@@ -188,7 +278,7 @@ export default function Program() {
     gamma: Context,
     index: Index<Module>
   ): JSX.Element {
-    console.log("render type");
+    console.log("render type", type, index);
     switch (type.case) {
       case "arrow": {
         return (
@@ -270,6 +360,7 @@ export default function Program() {
             {renderBlock(
               term.block,
               gammaBlock,
+              type,
               concatIndex(index, { case: "block", index: here })
             )}
           </div>
@@ -287,8 +378,8 @@ export default function Program() {
             </div>
           );
         } else {
-          let arrowType: ArrowType = gamma.nameTypes.get(
-            gamma.idNames.get(term.termReference.id) as string
+          let arrowType: ArrowType = gamma.idTypes.get(
+            term.termReference.id
           ) as ArrowType;
           return (
             <div className={`${styles.neutral} ${styles.term}`}>
@@ -325,8 +416,8 @@ export default function Program() {
               concatIndex(index, { case: "term", index: here })
             )}
             {colon_punctuation}
-            {renderType(
-              { case: "data", typeReference: term.typeReference },
+            {renderTypeReference(
+              term.typeReference,
               gamma,
               concatIndex(index, { case: "typeReference", index: here })
             )}
@@ -358,48 +449,66 @@ export default function Program() {
     index: Index<Module>
   ): JSX.Element {
     console.log("render case");
-    let arrowType = gamma.nameTypes.get(
-      gamma.idNames.get(case_.termReference.id) as string
-    ) as ArrowType;
+    let arrowType = gamma.idTypes.get(case_.termReference.id) as ArrowType;
     let gammaBlock = gamma;
     case_.termBindings.forEach((termBinding, i) => {
-      gammaBlock = {
-        ...gammaBlock,
-        idNames: gammaBlock.idNames.set(
-          termBinding.id,
-          arrowType.parameters[i].label.name
-        ),
-      };
+      gammaBlock = addTermBinding(
+        gamma,
+        termBinding,
+        arrowType.parameters[i].label.name,
+        arrowType.parameters[i].type
+      );
     });
-    return (
-      <div className={styles.case}>
-        {alt_punctuation}
-        {renderTermReference(
-          case_.termReference,
-          gamma,
-          concatIndex(index, { case: "termReference", index: here })
-        )}
-        {lparen_punctuation}
-        {intercalate(
-          case_.termBindings.map((termBinding, i) =>
-            renderTermBinding(
-              termBinding,
-              gamma,
-              concatIndex(index, { case: "termBindings", i, index: here }),
-              arrowType.parameters[i].label
-            )
-          ),
-          comma_punctuation
-        )}
-        {rparen_punctuation}
-        {arrow_punctuation}
-        {renderBlock(
-          case_.block,
-          gammaBlock,
-          concatIndex(index, { case: "block", index: here })
-        )}
-      </div>
-    );
+    if (case_.termBindings.length === 0) {
+      return (
+        <div className={styles.case}>
+          {alt_punctuation}
+          {renderTermReference(
+            case_.termReference,
+            gamma,
+            concatIndex(index, { case: "termReference", index: here })
+          )}
+          {arrow_punctuation}
+          {renderBlock(
+            case_.block,
+            gammaBlock,
+            type,
+            concatIndex(index, { case: "block", index: here })
+          )}
+        </div>
+      );
+    } else {
+      return (
+        <div className={styles.case}>
+          {alt_punctuation}
+          {renderTermReference(
+            case_.termReference,
+            gamma,
+            concatIndex(index, { case: "termReference", index: here })
+          )}
+          {lparen_punctuation}
+          {intercalate(
+            case_.termBindings.map((termBinding, i) =>
+              renderTermBinding(
+                termBinding,
+                gamma,
+                concatIndex(index, { case: "termBindings", i, index: here }),
+                arrowType.parameters[i].label
+              )
+            ),
+            comma_punctuation
+          )}
+          {rparen_punctuation}
+          {arrow_punctuation}
+          {renderBlock(
+            case_.block,
+            gammaBlock,
+            type,
+            concatIndex(index, { case: "block", index: here })
+          )}
+        </div>
+      );
+    }
   }
   function renderParameter(
     param: Format<Parameter>,
@@ -469,9 +578,7 @@ export default function Program() {
   }
 
   return (
-    <div className={styles.Program}>
-      {renderBlock(programState.module, emptyContext(), here)}
-    </div>
+    <div className={styles.Program}>{renderModule(programState.module)}</div>
   );
 }
 
@@ -485,6 +592,6 @@ function intersperseRight<A>(list: A[], sep: A): A[] {
   return list.flatMap((a) => [a, sep]);
 }
 
-function intersperseLeft<A>(list: A[], sep: A): A[] {
-  return list.flatMap((a) => [sep, a]);
-}
+// function intersperseLeft<A>(list: A[], sep: A): A[] {
+//   return list.flatMap((a) => [sep, a]);
+// }
