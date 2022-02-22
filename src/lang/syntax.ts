@@ -1,4 +1,4 @@
-import { Map } from "immutable"
+import { List, Map } from "immutable"
 
 // Syntax
 
@@ -10,10 +10,12 @@ export type Syntax =
   | Term
   | Case
   | Parameter
-  | Binding
-  | UniqueBinding
-  | Name
-  | Reference
+  | Label
+  | TermBinding
+  | UniqueTermBinding
+  | TermReference
+  | TypeBinding
+  | TypeReference
 
 // Module
 
@@ -25,7 +27,8 @@ export type Module = Block
 export type Block = {
   case: "block",
   definitions: Definition[],
-  body: Term
+  body: Term,
+  type: Type
 }
 
 // Definition
@@ -34,29 +37,32 @@ export type Definition = DataDefinition | TermDefinition
 
 export type TermDefinition = {
   case: "term definition",
-  uniqueBinding: UniqueBinding,
+  uniqueTermBinding: UniqueTermBinding,
   type: Type,
   term: Term
 }
 
 export type DataDefinition = {
   case: "data definition",
-  id: Id,
+  typeBinding: TypeBinding,
   constructors: Constructor[]
 }
 
 export type Constructor = {
   case: "constructor",
-  uniqueBinding: UniqueBinding,
+  uniqueTermBinding: UniqueTermBinding,
   parameters: Parameter[]
 }
 
-export const typeOfConstructor = (dataRef: Reference, constructor: Constructor): Type => 
-  ({
-      case: "arrow",
-      parameters: constructor.parameters,
-      output: {case: "data", reference: dataRef}
-  })
+export const typeOfConstructor = (typeReference: TypeReference, constructor: Constructor): Type => 
+  (constructor.parameters.length > 0 ? 
+    {
+        case: "arrow",
+        parameters: constructor.parameters,
+        output: {case: "data", typeReference}
+    } : 
+    {case: "data", typeReference}
+  )
 
 // Type
 
@@ -71,12 +77,13 @@ export type ArrowType = {
 
 export type DataType = {
   case: "data",
-  reference: Reference
+  typeReference: TypeReference
 }
 
 export type HoleType = {
   case: "hole",
-  holeId: HoleId
+  holeId: HoleId,
+  weakening: Type[]
 }
 
 // Term
@@ -85,62 +92,76 @@ export type Term = LambdaTerm | NeutralTerm | MatchTerm | HoleTerm
 
 export type LambdaTerm = {
   case: "lambda",
-  ids: Id[],
+  termBindings: TermBinding[],
   block: Block
 }
 
 export type NeutralTerm = {
   case: "neutral",
-  reference: Reference
+  termReference: TermReference
   args: Term[]
 }
 
 export type MatchTerm = {
   case: "match",
-  reference: Reference,
+  typeReference: TypeReference,
   term: Term,
   cases: Case[]
 }
 
 export type Case = {
   case: "case",
-  bindings: Binding[],
+  termReference: TermReference,
+  termBindings: TermBinding[],
   block: Block
 }
 
 export type HoleTerm = {
   case: "hole",
   holeId: HoleId,
-  weakening: Weakening,
-  substitution: Substitution<Name, Term>
 }
 
 // Parameter
 
 export type Parameter = {
   case: "parameter"
-  name: Name,
+  label: Label,
   type: Type
 }
 
-// Binding and UniqueBinding
+export type Label = {
+  case: "label",
+  name: Name
+}
 
-export type Binding = {
-  case: "binding",
+// Binding and UniqueTermBinding
+
+export type TermBinding = {
+  case: "term binding",
   id: Id
 }
 
-export type UniqueBinding = {
-  case: "unique binding",
-  Name: Name,
+export type UniqueTermBinding = {
+  case: "unique term binding",
+  name: Name,
   id: Id
+}
+
+export type TypeBinding = {
+  case: "type binding",
+  name: Name,
 }
 
 // Reference
 
-export type Reference = {
-  case: "reference",
+export type TermReference = {
+  case: "term reference",
   id: Id
+}
+
+export type TypeReference = {
+  case: "type reference",
+  name: Name
 }
 
 // Name
@@ -157,11 +178,38 @@ export type HoleId = Symbol
 
 // Fresh
 
-export function freshBlock(): Block {throw new Error()}
-export function freshHoleTerm(): HoleTerm {throw new Error()}
-export function freshHoleType(): HoleType {throw new Error()}
-export function freshId(): Id {throw new Error()}
-export function freshName(): Name {throw new Error()}
+export function freshBlock(): Block {
+  return ({
+    case: "block",
+    definitions: [],
+    body: freshHoleTerm(),
+    type: freshHoleType()
+  })
+}
+
+export function freshHoleTerm(): HoleTerm {
+  const holeId: unique symbol = Symbol()
+  return ({
+    case: "hole",
+    holeId
+  })
+}
+
+export function freshHoleType(): HoleType {
+  const holeId: unique symbol = Symbol()
+  return ({
+    case: "hole",
+    holeId,
+    weakening: []
+  })
+}
+
+export function freshId(): Id {
+  const id: unique symbol = Symbol()
+  return id
+}
+
+export function freshName(): Name {throw new Error("umimplemented: freshName")}
 
 // export function freshName(): Name {
 //   return ""
@@ -204,7 +252,15 @@ export function freshName(): Name {throw new Error()}
 
 // Context
 
-export type Context = Map<Name, Type>
+export type Context = {
+  types: List<Name>,
+  nameTypes: Map<Name, Type>,
+  idNames: Map<Id, Name>
+}
+
+export function emptyContext(): Context {
+  return {types: List(), nameTypes: Map(), idNames: Map()}
+}
 
 // Weakening
 

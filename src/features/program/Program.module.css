@@ -1,0 +1,88 @@
+.keyword {
+  display: inline-block;
+  margin-right: 0.2em;
+  font-weight: bold;
+}
+
+.punctuation {
+  display: inline-block;
+  margin-right: 0.2em;
+  margin-left: 0.2em;
+  font-weight: bold;
+}
+
+.block {
+  display: inline-block;
+}
+
+.definition {
+  display: block;
+  /* display: inline-block; */
+  margin-bottom: 1em;
+}
+.termDefinition {
+}
+.dataDefinition {
+}
+
+.constructor {
+  display: inline-block;
+}
+
+.type {
+  display: inline-block;
+}
+.type.arrow {
+}
+.type.data {
+}
+.type.hole {
+}
+
+.term {
+  display: inline-block;
+}
+.term.lambda {
+}
+.term.neutral {
+}
+.term.match {
+}
+.term.hole {
+}
+
+.case {
+  display: inline-block;
+}
+
+.parameter {
+  display: inline-block;
+}
+
+.uniqueTermBinding {
+  display: inline-block;
+}
+.termBinding {
+  display: inline-block;
+}
+.typeBinding {
+  display: inline-block;
+}
+.termReference {
+  display: inline-block;
+}
+.typeReference {
+  display: inline-block;
+}
+
+.label {
+  display: inline-block;
+}
+
+.holeId {
+  display: inline-block;
+}
+
+.Program {
+  padding: 2em;
+}
