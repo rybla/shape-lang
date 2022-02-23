@@ -10,9 +10,8 @@ But this short file just lists what the transformations are.
     - remove a definition
     - reorder definitions by moving a single definition to a different location.
 - Some sort of way to work on function applications within a hole
-    - Apply a function around a term in the program?
-    - Have a scratch area in which terms can be dragged around?
-    - Etc...
+    - buffers are list of terms
+    - Can add variable in context to create new neutral in hole
 - dig
 - function argument manipulations
     - add an argument

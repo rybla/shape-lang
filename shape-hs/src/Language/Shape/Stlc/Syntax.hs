@@ -25,7 +25,9 @@ data Term
       Reference -- type of term to match on (must be a DataType)
       Term -- term to match on
       [Case] -- cases of matched term
-  | HoleTerm Hole [(Type, Term)]
+  | HoleTerm Hole [Term]
+-- All of terms in a hole are of a base type, and they are all neutral forms.
+-- Consider having a separate type for neutrals, so reflect that in typing?
 
 data Case
   = Case
