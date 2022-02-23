@@ -19,7 +19,7 @@ data Type
   | BaseType BaseType
 
 data Term
-  = LambdaTerm [Binding] Block -- the ids are specified in its `ArrowType`
+  = LambdaTerm [Binding] Block -- the names are specified in its `ArrowType`
   | HoleTerm [NeutralTerm]
   | NeutralTerm NeutralTerm
 -- All of terms in a hole are of a base type, and they are all neutral forms.

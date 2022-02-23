@@ -22,7 +22,7 @@ data InputChange = Change TypeChange Int | Insert
 
 data DataConstructorChange =  -- TODO: rethink this
     InputsChange [InputChange] |
-    DeleteConstructorChange Int | NewConstructor Int Constructor | DeleteConstructor Int
+    NewConstructor Int Constructor | DeleteConstructor Int
 
 data VarChange = VariableTypeChange TypeChange | VariableDeletion
 data DataChange = DataTypeDeletion | DataTypeChange DataConstructorChange
@@ -39,19 +39,35 @@ insertAt xs i x = take i xs ++ [x] ++ drop i xs
 applyAt :: [a] -> Int -> (a -> a) -> [a]
 applyAt xs i f = take i xs ++ [f (xs !! i)] ++ drop (i + 1) xs
 
-chType :: TypeChange -> Type -> Type
-chType NoChange t = t
-chType (TypeReplace t2) t1 = t2
-chType (ArrowChange ics out) (ArrowType as b)
-  = ArrowType (map mapper ics) bNew
-  where bNew = case out of
-          TypeReplace (BaseType t) -> t
-          NoChange -> b
-          _ -> error "base type is not arrow type"
-        mapper :: InputChange -> (Name, Type)
-        mapper (Change tc n) = (fst $ as !! n , chType tc (snd $ as !! n))
-        mapper Insert = ("_" , BaseType (HoleType (newSymbol ()) []))
-chType (ArrowChange _ _) (BaseType bt) = error "Can't ArrowChange a base type"
+chType :: Changes -> TypeChange -> Type -> Type
+chType gamma c t = 
+  let chTypeImpl :: TypeChange -> Type -> Type
+      chTypeImpl NoChange t = t
+      chTypeImpl (TypeReplace t2) t1 = t2
+      chTypeImpl (ArrowChange ics out) (ArrowType as b)
+        = ArrowType (map mapper ics) bNew
+        where bNew = case out of
+                TypeReplace (BaseType t) -> t
+                NoChange -> b
+                _ -> error "base type is not arrow type"
+              mapper :: InputChange -> (Name, Type)
+              mapper (Change tc n) = (fst $ as !! n , chTypeImpl tc (snd $ as !! n))
+              mapper Insert = ("_" , BaseType (HoleType (newSymbol ()) []))
+      chTypeImpl (ArrowChange _ _) (BaseType bt) = error "Can't ArrowChange a base type"
+  in searchType gamma (chTypeImpl c t)
+
+searchType :: Changes -> Type -> Type
+searchType gamma (ArrowType ins out)
+  = ArrowType (map (\(x,t) -> (x, searchType gamma t)) ins) (searchBaseType gamma out)
+searchType gamma (BaseType bt) = BaseType (searchBaseType gamma bt)
+
+searchBaseType :: Changes -> BaseType -> BaseType
+searchBaseType gamma (DataType x) = case lookup x (snd gamma) of
+  Nothing -> DataType x
+  Just dc -> case dc of
+    DataTypeDeletion -> HoleType (newSymbol ()) []
+    (DataTypeChange dcc) -> DataType x
+searchBaseType gamma (HoleType sym syms) = _w1a -- remove deleted types from weakening?
 
 chArgs :: Changes -> [InputChange] -> [Term] -> [Term]
 chArgs gamma c args = map mapper c
@@ -107,7 +123,7 @@ searchNeutral :: Changes -> NeutralTerm -> Either NeutralTerm [NeutralTerm]
 searchNeutral gamma (Neutral x args) = case lookup x (fst gamma) of
   Nothing -> Left (Neutral x (searchArgs gamma args))
   Just ch -> case ch of
-    -- Variable Deletion case?
+    VariableDeletion -> Right (mapMaybe (termToNeutral gamma) args)
     VariableTypeChange tc -> case tc of
       NoChange -> Left (Neutral x (searchArgs gamma args))
       (TypeReplace ty) -> undefined
@@ -119,6 +135,7 @@ searchNeutral gamma (Neutral x args) = case lookup x (fst gamma) of
         in case outc of
           TypeReplace ty -> Left (Neutral x newArgs)
           _ -> Right (mapMaybe (termToNeutral gamma) newArgs)
+searchNeutral gamma (MatchTerm x t cases) = _ -- check for changes to type x.
 
 -- chNeutral gamma (MatchTerm sym te cas) = _wF gamma
 
@@ -130,9 +147,16 @@ searchBlock gamma (Block defs t)
   = Block (map (searchDefinition gamma) defs) (searchTerm gamma  t)
 
 searchDefinition :: Changes -> Definition -> Definition
-searchDefinition gamma (TermDefinition x ty t) = _w15
-searchDefinition gamma (DataDefinition x ctrs) = _w16
+searchDefinition gamma (TermDefinition x ty t)
+  = TermDefinition x (searchType gamma ty) (searchTerm gamma t)
+searchDefinition gamma (DataDefinition x ctrs)
+  = DataDefinition x (map (searchConstructor gamma) ctrs)
 
+searchConstructor :: Changes -> Constructor -> Constructor
+searchConstructor gamma (Constructor x args)
+  = Constructor x (map (\(x,t) -> (x, searchType gamma t)) args)
+
+-- TODO: why am I calling it gamma?
 -- TODO: no need for "search*" because we can just use NoChange!
 
 {-
