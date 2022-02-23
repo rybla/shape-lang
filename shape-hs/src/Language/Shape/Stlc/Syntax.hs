@@ -20,7 +20,7 @@ data Type
 
 data Term
   = LambdaTerm [Binding] Block -- the ids are specified in its `ArrowType`
-  | HoleTerm Hole [Term]
+  | HoleTerm [NeutralTerm]
   | NeutralTerm NeutralTerm
 -- All of terms in a hole are of a base type, and they are all neutral forms.
 -- Consider having a separate type for neutrals, so reflect that in typing?

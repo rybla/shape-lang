@@ -1,6 +1,9 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase #-}
 module Language.Shape.Stlc.Model where
 
-import Data.Map (Map, lookup, fromList)
+import Data.Map (Map, lookup, fromList, union)
 import Data.Symbol
 import Language.Shape.Stlc.Syntax
 import Prelude hiding (lookup)
@@ -54,14 +57,14 @@ chArgs :: Changes -> [InputChange] -> [Term] -> [Term]
 chArgs gamma c args = map mapper c
   where mapper :: InputChange -> Term
         mapper (Change tc n) = searchTerm gamma $ chTerm gamma tc (args !! n)
-        mapper Insert = HoleTerm (newSymbol ()) []
+        mapper Insert = HoleTerm []
 
 searchArgs :: Changes -> [Term] -> [Term]
 searchArgs gamma = map (searchTerm gamma)
 
 chTerm :: Changes -> TypeChange -> Term -> Term
 -- TODO: need to thread context and type through all these function in order to deal with this undefined.
-chTerm gamma (TypeReplace ty) t = HoleTerm (newSymbol ()) undefined {-t but remove lambdas-}
+chTerm gamma (TypeReplace ty) t = HoleTerm undefined {-t but remove lambdas-}
 chTerm gamma NoChange t = searchTerm gamma t
 chTerm gamma (ArrowChange ics tc) (LambdaTerm syms bl)
   = LambdaTerm (map mapper ics) (chBlock gamma tc bl)
@@ -70,44 +73,65 @@ chTerm gamma (ArrowChange ics tc) (LambdaTerm syms bl)
         mapper Insert = newSymbol ()
 chTerm gamma (ArrowChange ics tc) _ = error "only a lambda should be an arrow type"
 
-termToNeutral :: Term -> Maybe NeutralTerm
+termToNeutral :: Changes -> Term -> Maybe NeutralTerm
 -- For now, just forgets everything that was in the definitions section of the block. TODO: figure out what it should do.
-termToNeutral (LambdaTerm syms (Block _ t))
-  = termToNeutral (searchTerm (deletions, mempty) t)
+termToNeutral gamma (LambdaTerm syms (Block _ t))
+  = termToNeutral gamma (searchTerm (union deletions (fst gamma), (snd gamma)) t)
   where deletions :: Map Id VarChange
         deletions = fromList (map (\x -> (x, VariableDeletion)) syms)
-termToNeutral (HoleTerm sym tes) = Nothing
-termToNeutral (NeutralTerm nt) = Just nt
+termToNeutral gamma (HoleTerm tes) = Nothing
+termToNeutral gamma (NeutralTerm nt) = Just nt
 
 -- TODO: should term at end of block always be of base type? If so, incorporate into syntax?
 -- TODO: should things of base type have different case in Term for variables?
 genNeutralFrom :: Id -> Type -> NeutralTerm
 genNeutralFrom x (ArrowType inputs out)
-  = Neutral  x (map (\_ -> HoleTerm (newSymbol ()) []) inputs)
+  = Neutral  x (map (\_ -> HoleTerm []) inputs)
 genNeutralFrom x (BaseType bt) = Neutral x []
 
 searchTerm :: Changes -> Term -> Term
-searchTerm gamma (LambdaTerm syms bl) = _wD
-searchTerm gamma (HoleTerm sym buffer) = _wG
-searchTerm gamma (NeutralTerm t) = searchNeutral gamma t
+searchTerm gamma (LambdaTerm syms bl) = LambdaTerm syms (searchBlock gamma bl)
+searchTerm gamma (HoleTerm buffer)
+  = HoleTerm (listAcc (map (searchNeutral gamma) buffer))
+searchTerm gamma (NeutralTerm t) = case searchNeutral gamma t of
+  Left t2 -> NeutralTerm t2
+  Right nts -> HoleTerm nts
 
-searchNeutral :: Changes -> NeutralTerm -> Term
+listAcc :: [Either a [a]] -> [a]
+listAcc [] = []
+listAcc ((Left a) : es) = a : listAcc es
+listAcc ((Right as) : es) = as ++ listAcc es
+
+-- Returns either new term or contents of buffer
+searchNeutral :: Changes -> NeutralTerm -> Either NeutralTerm [NeutralTerm]
 searchNeutral gamma (Neutral x args) = case lookup x (fst gamma) of
-  Nothing -> NeutralTerm (Neutral x (searchArgs gamma args))
+  Nothing -> Left (Neutral x (searchArgs gamma args))
   Just ch -> case ch of
+    -- Variable Deletion case?
     VariableTypeChange tc -> case tc of
-      NoChange -> NeutralTerm (Neutral x (searchArgs gamma args))
-      (TypeReplace ty) -> HoleTerm (newSymbol ())
-        $ NeutralTerm (genNeutralFrom x ty) : mapMaybe (fmap NeutralTerm . termToNeutral) args
-      (ArrowChange ics tc') -> _wJ -- If tc' =/= NoChange, need to put into hole.
-    VariableDeletion -> HoleTerm (newSymbol ()) (mapMaybe (fmap NeutralTerm . termToNeutral) args)
-searchNeutral gamma (MatchTerm sym te cas) = _wF
+      NoChange -> Left (Neutral x (searchArgs gamma args))
+      (TypeReplace ty) -> undefined
+        $ genNeutralFrom x ty : mapMaybe (termToNeutral gamma) args
+      (ArrowChange ics outc) ->
+        let newArgs = map (\case
+              Change c n -> chTerm gamma c (args !! n)
+              Insert -> HoleTerm []) ics
+        in case outc of
+          TypeReplace ty -> Left (Neutral x newArgs)
+          _ -> Right (mapMaybe (termToNeutral gamma) newArgs)
+
+-- chNeutral gamma (MatchTerm sym te cas) = _wF gamma
 
 chBlock :: Changes -> TypeChange -> Block -> Block
-chBlock = undefined
-
+chBlock gamma c (Block defs t)
+  = Block (map (searchDefinition gamma) defs) (chTerm gamma c t)
 searchBlock :: Changes -> Block -> Block
-searchBlock = undefined
+searchBlock gamma (Block defs t)
+  = Block (map (searchDefinition gamma) defs) (searchTerm gamma  t)
+
+searchDefinition :: Changes -> Definition -> Definition
+searchDefinition gamma (TermDefinition x ty t) = _w15
+searchDefinition gamma (DataDefinition x ctrs) = _w16
 
 -- TODO: no need for "search*" because we can just use NoChange!
 
