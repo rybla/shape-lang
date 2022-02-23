@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Language.Shape.Stlc.Model where
 
-import Data.Map (Map, lookup, fromList, union)
+import Data.Map (Map, lookup, fromList, union, singleton, unions)
 import Data.Symbol
 import Language.Shape.Stlc.Syntax
 import Prelude hiding (lookup)
@@ -19,15 +19,12 @@ data InputChange = Change TypeChange Int | Insert
 -- (A,C,?)->D
 -- ArrowChange [Change NoChange 0, Change NoChange 2, Insert] NoChange
 
-
-data DataConstructorChange =  -- TODO: rethink this
-    InputsChange [InputChange] |
-    NewConstructor Int Constructor | DeleteConstructor Int
-
 data VarChange = VariableTypeChange TypeChange | VariableDeletion
-data DataChange = DataTypeDeletion | DataTypeChange DataConstructorChange
 
-type Changes = (Map Binding VarChange, Map Binding DataChange)
+data ConstructorChange = CtrChange InputChange Int | CtrInsert
+data DataChange = DataTypeDeletion | DataTypeChange [ConstructorChange]
+
+type Changes = (Map Id VarChange, Map Id DataChange)
 
 -- Why arent these basic function in haskell's standard library?
 deleteAt :: [a] -> Int -> [a]
@@ -83,10 +80,16 @@ chTerm :: Changes -> TypeChange -> Term -> Term
 chTerm gamma (TypeReplace ty) t = HoleTerm undefined {-t but remove lambdas-}
 chTerm gamma NoChange t = searchTerm gamma t
 chTerm gamma (ArrowChange ics tc) (LambdaTerm syms bl)
-  = LambdaTerm (map mapper ics) (chBlock gamma tc bl)
-  where mapper :: InputChange -> Id
-        mapper (Change tc' n) = syms !! n
-        mapper Insert = newSymbol ()
+  = LambdaTerm (map symMapper ics)
+    (chBlock (fst gamma `union` newChanges, snd gamma) tc bl)
+  where symMapper :: InputChange -> Id
+        symMapper (Change tc' n) = syms !! n
+        symMapper Insert = newSymbol () -- In order for changes to be in gamma, Insert will need info about the new type.
+        changeMapper :: InputChange -> Map Id VarChange
+        changeMapper (Change tc' n) = singleton (syms !! n) VariableDeletion
+        changeMapper Insert = mempty
+        newChanges :: Map Id VarChange
+        newChanges = unions (map changeMapper ics)
 chTerm gamma (ArrowChange ics tc) _ = error "only a lambda should be an arrow type"
 
 termToNeutral :: Changes -> Term -> Maybe NeutralTerm
@@ -97,6 +100,10 @@ termToNeutral gamma (LambdaTerm syms (Block _ t))
         deletions = fromList (map (\x -> (x, VariableDeletion)) syms)
 termToNeutral gamma (HoleTerm tes) = Nothing
 termToNeutral gamma (NeutralTerm nt) = Just nt
+
+blockToNeutral :: Changes -> Block -> Maybe NeutralTerm
+-- Again, for now, just forgets everything that was in the definitions section of the block. TODO: figure out what it should do.
+blockToNeutral gamma (Block des t) = termToNeutral gamma t
 
 -- TODO: should term at end of block always be of base type? If so, incorporate into syntax?
 -- TODO: should things of base type have different case in Term for variables?
@@ -135,7 +142,24 @@ searchNeutral gamma (Neutral x args) = case lookup x (fst gamma) of
         in case outc of
           TypeReplace ty -> Left (Neutral x newArgs)
           _ -> Right (mapMaybe (termToNeutral gamma) newArgs)
-searchNeutral gamma (MatchTerm x t cases) = _ -- check for changes to type x.
+searchNeutral gamma (MatchTerm x t cases) = case lookup x (snd gamma) of
+  Nothing -> Left (MatchTerm x (searchTerm gamma t) (map (searchCase gamma) cases))
+  Just dc -> case dc of
+    DataTypeDeletion -> Right (mapMaybe (\(Case _ _ b) -> blockToNeutral gamma b) cases)
+    (DataTypeChange dcc) -> Left (MatchTerm x (searchTerm gamma t) newCases)
+      where newCases :: [Case]
+            newCases = map mapper dcc
+            mapper :: ConstructorChange -> Case
+            -- needs to modify bound vars and add new changes to gamma accordingly.
+            mapper (CtrChange ic n) = _w1i
+            mapper CtrInsert = Case undefined undefined (Block [] (HoleTerm []))
+            -- TODO: CtrInsert should have info about new constsructor.
+-- Something to think about: could just have each datatype definition create an
+-- induction principle in scope (exactly the same as match), which then can use
+-- existing "chTerm", "chArgs", ... to deal with changes.
+
+searchCase :: Changes -> Case -> Case
+searchCase = error "not implemented"
 
 -- chNeutral gamma (MatchTerm sym te cas) = _wF gamma
 
