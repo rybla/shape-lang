@@ -30,6 +30,7 @@ import {
 import { concatIndex, here, Index } from "../../lang";
 import { defaultFormat, Format, unformat } from "../../lang/format";
 
+const let_keyword = <span className={styles.keyword}>let</span>;
 const data_keyword = <span className={styles.keyword}>data</span>;
 const match_keyword = <span className={styles.keyword}>match</span>;
 const with_keyword = <span className={styles.keyword}>with</span>;
@@ -158,6 +159,8 @@ export default function Program() {
             });
             return (
               <div className={`${styles.termDefinition} ${styles.definition}`}>
+                {let_keyword}
+                {space_punctuation}
                 {renderUniqueTermBinding(
                   definition.uniqueTermBinding,
                   gamma,
@@ -207,6 +210,8 @@ export default function Program() {
           case "hole": {
             return (
               <div className={`${styles.termDefinition} ${styles.definition}`}>
+                {let_keyword}
+                {space_punctuation}
                 {renderUniqueTermBinding(
                   definition.uniqueTermBinding,
                   gamma,
