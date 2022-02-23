@@ -9,11 +9,13 @@ But this short file just lists what the transformations are.
     - add a new definition
     - remove a definition
     - reorder definitions by moving a single definition to a different location.
-- Some sort of way to work on function applications within a hole
-    - buffers are list of terms
-    - Can add variable in context to create new neutral in hole
+- Neutral form building
+    - Holes have a set of neutral forms in them
+    - Add new neutral form by selecting a variable in context
+        - Arguments are holes
+    - Place one neutral form in hole of another one
 - dig
-- function argument manipulations
+- Type declaration manipulations
     - add an argument
     - remove an argument
     - move an argument to a different position
