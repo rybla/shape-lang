@@ -20,14 +20,17 @@ data Type
 
 data Term
   = LambdaTerm [Binding] Block -- the ids are specified in its `ArrowType`
-  | NeutralTerm Reference [Term]
-  | MatchTerm
+  | HoleTerm Hole [Term]
+  | NeutralTerm NeutralTerm
+-- All of terms in a hole are of a base type, and they are all neutral forms.
+-- Consider having a separate type for neutrals, so reflect that in typing?
+
+data NeutralTerm
+  = MatchTerm
       Reference -- type of term to match on (must be a DataType)
       Term -- term to match on
       [Case] -- cases of matched term
-  | HoleTerm Hole [Term]
--- All of terms in a hole are of a base type, and they are all neutral forms.
--- Consider having a separate type for neutrals, so reflect that in typing?
+  | Neutral Reference [Term]
 
 data Case
   = Case

@@ -5,6 +5,7 @@ import Data.Symbol
 import Language.Shape.Stlc.Syntax
 import Prelude hiding (lookup)
 import System.Directory.Internal.Prelude (newEmptyMVar)
+import Data.Maybe
 
 data TypeChange = TypeReplace Type | NoChange | ArrowChange [InputChange] TypeChange
 -- data BaseTypeChange = TypeReplace Type | NoChange
@@ -52,7 +53,7 @@ chType (ArrowChange _ _) (BaseType bt) = error "Can't ArrowChange a base type"
 chArgs :: Changes -> [InputChange] -> [Term] -> [Term]
 chArgs gamma c args = map mapper c
   where mapper :: InputChange -> Term
-        mapper (Change tc n) = searchTerm gamma $ chTerm gamma tc (args !! n) 
+        mapper (Change tc n) = searchTerm gamma $ chTerm gamma tc (args !! n)
         mapper Insert = HoleTerm (newSymbol ()) []
 
 searchArgs :: Changes -> [Term] -> [Term]
@@ -69,32 +70,38 @@ chTerm gamma (ArrowChange ics tc) (LambdaTerm syms bl)
         mapper Insert = newSymbol ()
 chTerm gamma (ArrowChange ics tc) _ = error "only a lambda should be an arrow type"
 
-removeOuterLambda :: Term -> Term
+termToNeutral :: Term -> Maybe NeutralTerm
 -- For now, just forgets everything that was in the definitions section of the block. TODO: figure out what it should do.
-removeOuterLambda (LambdaTerm syms (Block _ t)) = searchTerm (deletions, mempty) t
+termToNeutral (LambdaTerm syms (Block _ t))
+  = termToNeutral (searchTerm (deletions, mempty) t)
   where deletions :: Map Id VarChange
         deletions = fromList (map (\x -> (x, VariableDeletion)) syms)
-removeOuterLambda t = t
+termToNeutral (HoleTerm sym tes) = Nothing
+termToNeutral (NeutralTerm nt) = Just nt
 
 -- TODO: should term at end of block always be of base type? If so, incorporate into syntax?
 -- TODO: should things of base type have different case in Term for variables?
-genNeutralFrom :: Id -> Type -> Term
+genNeutralFrom :: Id -> Type -> NeutralTerm
 genNeutralFrom x (ArrowType inputs out)
-  = NeutralTerm  x (map (\_ -> HoleTerm (newSymbol ()) []) inputs)
-genNeutralFrom x (BaseType bt) = NeutralTerm x []
+  = Neutral  x (map (\_ -> HoleTerm (newSymbol ()) []) inputs)
+genNeutralFrom x (BaseType bt) = Neutral x []
 
 searchTerm :: Changes -> Term -> Term
 searchTerm gamma (LambdaTerm syms bl) = _wD
-searchTerm gamma (NeutralTerm x args) = case lookup x (fst gamma) of
-  Nothing -> NeutralTerm x (searchArgs gamma args)
+searchTerm gamma (HoleTerm sym buffer) = _wG
+searchTerm gamma (NeutralTerm t) = searchNeutral gamma t
+
+searchNeutral :: Changes -> NeutralTerm -> Term
+searchNeutral gamma (Neutral x args) = case lookup x (fst gamma) of
+  Nothing -> NeutralTerm (Neutral x (searchArgs gamma args))
   Just ch -> case ch of
     VariableTypeChange tc -> case tc of
-      NoChange -> NeutralTerm x (searchArgs gamma args)
-      (TypeReplace ty) -> HoleTerm (newSymbol ()) $ genNeutralFrom x ty : map removeOuterLambda args
+      NoChange -> NeutralTerm (Neutral x (searchArgs gamma args))
+      (TypeReplace ty) -> HoleTerm (newSymbol ())
+        $ NeutralTerm (genNeutralFrom x ty) : mapMaybe (fmap NeutralTerm . termToNeutral) args
       (ArrowChange ics tc') -> _wJ -- If tc' =/= NoChange, need to put into hole.
-    VariableDeletion -> HoleTerm (newSymbol ()) (map removeOuterLambda args)
-searchTerm gamma (MatchTerm sym te cas) = _wF
-searchTerm gamma (HoleTerm sym buffer) = _wG
+    VariableDeletion -> HoleTerm (newSymbol ()) (mapMaybe (fmap NeutralTerm . termToNeutral) args)
+searchNeutral gamma (MatchTerm sym te cas) = _wF
 
 chBlock :: Changes -> TypeChange -> Block -> Block
 chBlock = undefined
@@ -114,13 +121,13 @@ chTerm = undefined
 
 searchTerm :: Changes -> Term -> Term
 searchTerm gamma (LambdaTerm binds block) = undefined
-searchTerm gamma (NeutralTerm x args) = case lookup x (fst gamma) of
-  Nothing -> NeutralTerm x (searchArgs gamma args)
+searchTerm gamma (Neutral x args) = case lookup x (fst gamma) of
+  Nothing -> Neutral x (searchArgs gamma args)
   Just ch -> case ch of
     (VariableTypeChange tc) -> case tc of
-      (Output tc') -> HoleTerm (newSymbol ()) [undefined {-NeutralTerm x args-}]
+      (Output tc') -> HoleTerm (newSymbol ()) [undefined {-Neutral x args-}]
       (TypeReplace ty) -> HoleTerm (newSymbol ()) [undefined {-Var x-} {-args...-}] -- put args and var in buffer
-      (InputChange ic) -> NeutralTerm x (chArgs args gamma ic)
+      (InputChange ic) -> Neutral x (chArgs args gamma ic)
     VariableDeletion -> HoleTerm (newSymbol ()) [undefined {-args...-}] -- put args in buffer
 searchTerm gamma (MatchTerm ty t cases) = case lookup ty (snd gamma) of
   Nothing -> undefined -- use searchCases on cases and also searchTerm on t
