@@ -1,14 +1,18 @@
 .keyword {
   display: inline-block;
-  margin-right: 0.2em;
+  /* margin-right: 0.2em; */
   font-weight: bold;
 }
 
 .punctuation {
   display: inline-block;
-  margin-right: 0.2em;
-  margin-left: 0.2em;
+  /* margin-right: 0.2em;
+  margin-left: 0.2em; */
   font-weight: bold;
+}
+
+.punctuation.space {
+  width: 0.4em;
 }
 
 .block {
@@ -25,7 +29,7 @@
 .dataDefinition {
 }
 
-.constructor {
+.constructor_ {
   display: inline-block;
 }
 
@@ -85,4 +89,6 @@
 
 .Program {
   padding: 2em;
+  font-family: monospace;
+  font-size: 12pt;
 }
