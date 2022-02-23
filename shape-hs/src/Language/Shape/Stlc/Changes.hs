@@ -154,9 +154,21 @@ searchNeutral gamma (MatchTerm x t cases) = case lookup x (snd gamma) of
             mapper (CtrChange ic n) = _w1i
             mapper CtrInsert = Case undefined undefined (Block [] (HoleTerm []))
             -- TODO: CtrInsert should have info about new constsructor.
--- Something to think about: could just have each datatype definition create an
--- induction principle in scope (exactly the same as match), which then can use
--- existing "chTerm", "chArgs", ... to deal with changes.
+{-
+Something to think about: could just have each datatype definition create an
+induction principle in scope (exactly the same as match), which then can use
+existing "chTerm", "chArgs", ... to deal with changes.
+Advantages:
+- No match in syntax
+- No "DataChange", merely TypeChange
+- No special logic to deal with changing matches
+Disadvantages:
+- Can't generalize to more general pattern matching
+- Can't do stuff like display pattern matches on function inputs.
+- Display should still display as match.
+  - Perhaps Name = Either String String, and the latter is used for things which
+    are displayed as matches?
+-}
 
 searchCase :: Changes -> Case -> Case
 searchCase = error "not implemented"
