@@ -82,6 +82,8 @@ weakenType (TNe e) i = TNe (weakenNe e i)
 weakenHole :: Hole -> Prefix -> Hole
 weakenHole (Hole x s w) i = Hole x (fmap (`weakenNf` i) s) (Data.Set.insert 0 (Data.Set.map (`weakenVar` 0) w))
 
+-- TODO: eta normal form? Maybe input type to normalize, and in
+-- case with Pi type but not lam term, then fix it.
 normalize :: Term -> Nf
 normalize U = Type NU
 normalize (Var i) = Ne (Left i, [])
@@ -90,6 +92,39 @@ normalize (Lam x e) = NLam x (normalize e)
 normalize (App e1 e2) = appNf (normalize e1) [normalize e2]
 normalize (THole h) = Ne (Right h, [])
 normalize (Let x arg t body) = subNf (normalize body) (normalize arg) 0
+
+{-We need to not only beta-norm but also eta-expand.
+I believe that the sub and app functions of hereditary substitution will preserve both
+eta and beta expanded and normalness.
+Therefore, it is up to the normalize function itself to make use of this.
+
+Idea: input Ctx but not Type? It only matters for App, Var, and Hole cases.
+-}
+
+type Ctx = [Type]
+
+-- TODO: input context and deal with Ne at once?
+etaBeta :: Type -> Term -> Nf
+etaBeta NU U = Type NU
+etaBeta (TNe e) (Var i) = Ne (Left i, [])
+etaBeta (NPi x a b) (Var i) = undefined -- TODO: here it is!
+etaBeta NU (Pi x a b) = undefined -- Type (NPi x (normalizeType a) (normalizeType b))
+etaBeta (NPi y a b) (Lam x e) = NLam x (etaBeta b e)
+etaBeta (TNe e) (App e1 e2) = appNf (etaBeta e1) [etaBeta e2]
+etaBeta (NPi x a b) (App e1 e2) = undefined
+etaBeta _ (THole h) = Ne (Right h, [])
+etaBeta _ (Let x arg t body) = subNf (etaBeta body) (etaBeta arg) 0
+etaBeta _ _ = error "something went wrong"
+
+-- for dealing with the left of app
+normLeftHelper :: Ctx -> Term -> Nf
+normLeftHelper ctx (App e1 e2) = undefined
+normLeftHelper ctx (Var i) = undefined 
+normLeftHelper ctx (THole h) = undefined 
+normLeftHelper ctx _ = error "shouldn't get here"
+
+
+
 
 normalizeType :: Term -> Type
 normalizeType e = case normalize e of
@@ -160,4 +195,21 @@ unify (Let x arg ty body) (Let x' arg' ty' body') = do
     sub2 <- unify (hSubTerm sub1 ty) (hSubTerm sub1 ty)
     sub3 <- unify (hSubTerm sub2 (hSubTerm sub1 body)) (hSubTerm sub2 (hSubTerm sub1 body'))
     return $ combineSub sub1 sub2
-unify _ _ = Just Map.empty
+unify _ _ = Nothing
+
+freshHole :: Term -- obviously, need to implement this with monad stuff
+freshHole = undefined
+
+--           type    term     type  term  sub
+typeCheck :: Term -> Term -> Maybe (Term, Term, HoleSub)
+typeCheck ty (Lam y e) = do 
+    let h1 = freshHole
+    let h2 = freshHole
+    sub1 <- unify ty (Pi y h1 h2)
+    (ty, t, sub2) <- typeCheck (hSubTerm sub1 h2) (hSubTerm sub1 e)
+    let sub = combineSub sub1 sub2
+    return (hSubTerm sub (Pi y h1 h2), Lam y t, combineSub sub1 sub2)
+typeCheck ty U = do
+    sub <- unify ty U
+    return (U, U, sub)
+typeCheck _ _ = undefined
