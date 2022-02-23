@@ -17,6 +17,7 @@ export type Mode = { case: "edit" } | { case: "label" };
 const zero: Symbol = Symbol()
 const suc: Symbol = Symbol()
 const idNat_n: Symbol = Symbol();
+const idNat_suc_m = Symbol();
 const addNat_m: Symbol = Symbol();
 const addNat_n: Symbol = Symbol();
 const initialModule: Module = {
@@ -45,7 +46,7 @@ const initialModule: Module = {
           parameters: [
             {
               case: "parameter",
-              label: { case: "label", name: "idNat" },
+              label: { case: "label", name: "n" },
               type: {
                 case: "data",
                 typeReference: { case: "type reference", name: "Nat" },
@@ -67,7 +68,7 @@ const initialModule: Module = {
         parameters: [
           {
             case: "parameter",
-            label: { case: "label", name: "idNat" },
+            label: { case: "label", name: "n" },
             type: {
               case: "data",
               typeReference: { case: "type reference", name: "Nat" },
@@ -103,6 +104,16 @@ const initialModule: Module = {
                   definitions: [],
                   term: {case: "neutral", termReference: {case: "term reference", id: idNat_n}, args: []}
                 }
+              },
+              {
+                case: "case",
+                termReference: {case: "term reference", id: suc},
+                termBindings: [{case: "term binding", id: idNat_suc_m}],
+                block: {
+                  case: "block",
+                  definitions: [],
+                  term: {case: "neutral", termReference: {case: "term reference", id: idNat_suc_m}, args: []}
+                }
               }
             ],
           },
@@ -129,7 +140,7 @@ const initialModule: Module = {
           },
           {
             case: "parameter",
-            label: { case: "label", name: "idNat" },
+            label: { case: "label", name: "n" },
             type: {
               case: "data",
               typeReference: { case: "type reference", name: "Nat" },
@@ -145,7 +156,7 @@ const initialModule: Module = {
         case: "lambda",
         termBindings: [
           { case: "term binding", id: addNat_m },
-          { case: "term binding", id: addNat_n },
+          { case: "term binding", id: addNat_m },
         ],
         block: {
           case: "block",

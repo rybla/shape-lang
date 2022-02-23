@@ -2,6 +2,7 @@ import styles from "./Program.module.css";
 import { ProgramState } from "./ProgramState";
 import {
   addConstructor,
+  adddIdName,
   addTermBinding,
   addTypeName,
   addUniqueTermBinding,
@@ -34,11 +35,17 @@ const match_keyword = <span className={styles.keyword}>match</span>;
 const with_keyword = <span className={styles.keyword}>with</span>;
 const alt_punctuation = <span className={styles.punctuation}>|</span>;
 const arrow_punctuation = <span className={styles.punctuation}>-&gt;</span>;
-const comma_punctuation = <span className={styles.punctuation}>,</span>;
+const mapsto_punctuation = <span className={styles.punctuation}>=&gt;</span>;
 const lparen_punctuation = <span className={styles.punctuation}>(</span>;
 const rparen_punctuation = <span className={styles.punctuation}>)</span>;
 const assign_punctuation = <span className={styles.punctuation}>=</span>;
 const colon_punctuation = <span className={styles.punctuation}>:</span>;
+const space_punctuation = (
+  <span className={`${styles.space} ${styles.punctuation}`}></span>
+);
+const comma_punctuation = (
+  <span className={styles.punctuation}>,{space_punctuation}</span>
+);
 
 export default function Program() {
   var programState: ProgramState = new ProgramState();
@@ -172,6 +179,7 @@ export default function Program() {
                 )}
                 {rparen_punctuation}
                 {colon_punctuation}
+                {space_punctuation}
                 {renderType(
                   arrow.output,
                   gamma,
@@ -180,7 +188,9 @@ export default function Program() {
                     index: { case: "output", index: here },
                   })
                 )}
+                {space_punctuation}
                 {assign_punctuation}
+                {space_punctuation}
                 {renderBlock(
                   lambda.block,
                   gammaBlock,
@@ -202,13 +212,17 @@ export default function Program() {
                   gamma,
                   concatIndex(index, { case: "uniqueTermBinding", index: here })
                 )}
+                {space_punctuation}
                 {colon_punctuation}
+                {space_punctuation}
                 {renderType(
                   definition.type,
                   gamma,
                   concatIndex(index, { case: "type", index: here })
                 )}
+                {space_punctuation}
                 {assign_punctuation}
+                {space_punctuation}
                 {renderTerm(
                   definition.term,
                   gamma,
@@ -225,22 +239,25 @@ export default function Program() {
         return (
           <div className={`${styles.dataDefinition} ${styles.definition}`}>
             {data_keyword}
+            {space_punctuation}
             {renderTypeBinding(
               definition.typeBinding,
               gamma,
               concatIndex(index, { case: "typeBinding", index: here })
             )}
+            {space_punctuation}
             {assign_punctuation}
-            {definition.constructors.map((constructor, i) =>
-              renderConstructor(
-                definition.typeBinding.name,
-                constructor,
-                {
-                  ...gamma,
-                  types: gamma.types.push(definition.typeBinding.name),
-                },
-                concatIndex(index, { case: "constructors", i, index: here })
-              )
+            {space_punctuation}
+            {intercalate(
+              definition.constructors.map((constructor, i) =>
+                renderConstructor(
+                  definition.typeBinding.name,
+                  constructor,
+                  addTypeName(gamma, definition.typeBinding.name),
+                  concatIndex(index, { case: "constructors", i, index: here })
+                )
+              ),
+              space_punctuation
             )}
           </div>
         );
@@ -252,26 +269,42 @@ export default function Program() {
     constructor: Format<Constructor>,
     gamma: Context,
     index: Index<Module>
-  ) {
+  ): JSX.Element {
     console.log("render constructor");
-    return (
-      <div className={styles.constructor_}>
-        {alt_punctuation}
-        {renderUniqueTermBinding(
-          constructor.uniqueTermBinding,
-          gamma,
-          concatIndex(index, { case: "uniqueTermBinding", index: here })
-        )}
-        {colon_punctuation}
-        {renderType(
-          defaultFormat(
-            typeOfConstructor(name, unformat<Constructor>(constructor))
-          ),
-          gamma,
-          concatIndex(index, { case: "type", index: here })
-        )}
-      </div>
-    );
+    if (constructor.parameters.length === 0) {
+      return (
+        <div className={styles.constructor_}>
+          {alt_punctuation}
+          {space_punctuation}
+          {renderUniqueTermBinding(
+            constructor.uniqueTermBinding,
+            gamma,
+            concatIndex(index, { case: "uniqueTermBinding", index: here })
+          )}
+        </div>
+      );
+    } else {
+      return (
+        <div className={styles.constructor_}>
+          {alt_punctuation}
+          {space_punctuation}
+          {renderUniqueTermBinding(
+            constructor.uniqueTermBinding,
+            gamma,
+            concatIndex(index, { case: "uniqueTermBinding", index: here })
+          )}
+          {lparen_punctuation}
+          {constructor.parameters.map((param, i) =>
+            renderParameter(
+              param,
+              gamma,
+              concatIndex(index, { case: "parameters", i, index: here })
+            )
+          )}
+          {rparen_punctuation}
+        </div>
+      );
+    }
   }
   function renderType(
     type: Format<Type>,
@@ -292,7 +325,9 @@ export default function Program() {
               )
             )}
             {rparen_punctuation}
+            {space_punctuation}
             {arrow_punctuation}
+            {space_punctuation}
             {renderType(
               type.output,
               gamma,
@@ -331,15 +366,14 @@ export default function Program() {
     switch (term.case) {
       case "lambda": {
         // let type = infer(term, gamma) as ArrowType;
+        let arrow: ArrowType = type as ArrowType;
         let gammaBlock = gamma;
         term.termBindings.forEach((termBinding, i) => {
-          gammaBlock = {
-            ...gammaBlock,
-            idNames: gammaBlock.idNames.set(
-              termBinding.id,
-              (type as ArrowType).parameters[i].label.name
-            ),
-          };
+          gammaBlock = adddIdName(
+            gammaBlock,
+            termBinding.id,
+            arrow.parameters[i].label.name
+          );
         });
         return (
           <div className={`${styles.lambda} ${styles.term}`}>
@@ -355,8 +389,10 @@ export default function Program() {
               ),
               comma_punctuation
             )}
+            {space_punctuation}
             {rparen_punctuation}
-            {arrow_punctuation}
+            {space_punctuation}
+            {mapsto_punctuation}
             {renderBlock(
               term.block,
               gammaBlock,
@@ -388,6 +424,7 @@ export default function Program() {
                 gamma,
                 concatIndex(index, { case: "termReference", index: here })
               )}
+              {space_punctuation}
               {lparen_punctuation}
               {intercalate(
                 term.args.map((arg, i) =>
@@ -409,6 +446,7 @@ export default function Program() {
         return (
           <div className={`${styles.match} ${styles.term}`}>
             {match_keyword}
+            {space_punctuation}
             {renderTerm(
               term.term,
               gamma,
@@ -416,19 +454,25 @@ export default function Program() {
               concatIndex(index, { case: "term", index: here })
             )}
             {colon_punctuation}
+            {space_punctuation}
             {renderTypeReference(
               term.typeReference,
               gamma,
               concatIndex(index, { case: "typeReference", index: here })
             )}
+            {space_punctuation}
             {with_keyword}
-            {term.cases.map((case_, i) =>
-              renderCase(
-                case_,
-                gamma,
-                type,
-                concatIndex(index, { case: "cases", i, index: here })
-              )
+            {space_punctuation}
+            {intercalate(
+              term.cases.map((case_, i) =>
+                renderCase(
+                  case_,
+                  gamma,
+                  type,
+                  concatIndex(index, { case: "cases", i, index: here })
+                )
+              ),
+              space_punctuation
             )}
           </div>
         );
@@ -463,12 +507,15 @@ export default function Program() {
       return (
         <div className={styles.case}>
           {alt_punctuation}
+          {space_punctuation}
           {renderTermReference(
             case_.termReference,
             gamma,
             concatIndex(index, { case: "termReference", index: here })
           )}
-          {arrow_punctuation}
+          {space_punctuation}
+          {mapsto_punctuation}
+          {space_punctuation}
           {renderBlock(
             case_.block,
             gammaBlock,
@@ -481,6 +528,7 @@ export default function Program() {
       return (
         <div className={styles.case}>
           {alt_punctuation}
+          {space_punctuation}
           {renderTermReference(
             case_.termReference,
             gamma,
@@ -499,7 +547,9 @@ export default function Program() {
             comma_punctuation
           )}
           {rparen_punctuation}
-          {arrow_punctuation}
+          {space_punctuation}
+          {mapsto_punctuation}
+          {space_punctuation}
           {renderBlock(
             case_.block,
             gammaBlock,
@@ -520,6 +570,7 @@ export default function Program() {
       <div className={styles.parameter}>
         {renderLabel(param.label)}
         {colon_punctuation}
+        {space_punctuation}
         {renderType(
           param.type,
           gamma,
