@@ -14,11 +14,13 @@ to generate this file without the comments in this block.
 , dependencies =
   [ "console"
   , "effect"
+  , "halogen"
   , "lists"
   , "ordered-collections"
   , "prelude"
   , "tuples"
   , "undefined"
+  , "maybe"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

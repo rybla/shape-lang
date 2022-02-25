@@ -2,71 +2,84 @@ module Language.Shape.Stlc.Syntax where
 
 import Prelude
 import Prim hiding (Type)
-import Data.Symbol
 import Data.Tuple
-import Data.List
 import Data.Map
+import Data.List
 import Undefined
 
-type Program = Block
-
-data Block = Block (List Definition) Term
+data Module
+  = Module (List Definition)
 
 data Definition
-  = TermDefinition UniqueBinding Type Term
-  | DataDefinition UniqueBinding (List Constructor)
+  = TermDefinition UniqueTermBinding Type Term
+  | DataDefinition UniqueTypeBinding (List Constructor)
 
-data Constructor = Constructor UniqueBinding (List Parameter)
-
-data BaseType = DataType Reference | HoleType Hole
+data Constructor
+  = Constructor UniqueTermBinding (List Parameter)
 
 data Type
   = ArrowType (List Parameter) BaseType
   | BaseType BaseType
 
+data Block
+  = Block (List Definition) Term
+
+data BaseType
+  = DataType TypeReference
+  | HoleType HoleId TypeWeakening
+
 data Term
-  = LambdaTerm (List Binding) Block -- the ids are specified in its `ArrowType`
-  | NeutralTerm Reference (List Term)
-  | MatchTerm
-      Reference -- type of term to match on (must be a DataType)
-      Term -- term to match on
-      (List Case) -- cases of matched term
-  | HoleTerm Hole Weakening Substitution
+  = LambdaTerm (List TermBinding) Block -- the TermIds are specified in its `ArrowType`
+  | NeutralTerm TermReference (List Term)
+  | HoleTerm HoleId
 
-data Case
-  = Case
-      Reference -- to the `Constructor`
-      (List Binding) -- instances of the `Constructor`'s `Parameter`s
-      Block
+-- Parameter, TermBinding, UniqueTermBinding
+-- A `Parameter` appears where the type of a function specifies the `TermLabel` of a `Parameter` and its `Type`, as in `ArrowType` or `Constructor`. No `TermId` is specified since this is not an instance of the `TermLabel` as a term. The same `Parameter`'s `TermLabel` could be instantiated multiple times, such as in distinct `LambdaTerm`s and `MatchTerm` cases.
+data Parameter
+  = Parameter TermLabel Type
 
--- Parameter, Binding, UniqueBinding
+data TermLabel
+  = TermLabel TermName
 
--- A `Parameter` appears where the type of a function specifies the name of a `Parameter` and its `Type`, as in `ArrowType` or `Constructor`. No `Id` is specified since this is not an instance of the `Name` as a term. The same `Parameter`'s `Name` could be instantiated multiple times, such as in distinct `LambdaTerm`s and `MatchTerm` cases.
-type Parameter = Tuple Name Type
+-- TermReference, TermLabel, TermName, TermId
+-- A `TermBinding` appears where an instance of a `TermName` is bound, as in `LambdaTerm` and `Case`. The `TermName` that is bound is contextually determined, by a `ArrowType` and `Constructor` respectively.
+data TermBinding
+  = TermBinding TermId
 
--- A `Binding` appears where an instance of a `Name` is bound, as in `LambdaTerm` and `Case`. The `Name` that is bound is contextually determined, by a `ArrowType` and `Constructor` respectively.
-type Binding = Id
+-- A `UniqueTermBinding` appears where a `TermName` is introduced and a unique instance of that `TermName` is bound at once.
+data UniqueTermBinding
+  = UniqueTermBinding TermName TermBinding
 
--- A `UniqueBinding` appears where a `Name` is introduced and a unique instance of that `Name` is bound at once.
-type UniqueBinding = Tuple Name Binding
+data TermReference
+  = TermReference TermId
 
--- Reference, Name, Id
+-- not necessarily unique
+data TermName
+  = VarName String
+  | ConstrName String
 
-type Reference = Id
+-- unique
+type TermId
+  = Int
 
-type Name = String -- not necessarily unique
+--  UniqueTypeBinding, TypeReference, TypeName
+data UniqueTypeBinding
+  = UniqueTypeBinding TypeName
 
-type Id = Int -- Symbol -- unique
+data TypeReference
+  = TypeReference TypeName
+
+-- must be unique
+type TypeName
+  = String
 
 -- Hole
+type HoleId
+  = Int
 
-type Hole = Int -- Symbol
-
-freshHole :: Unit -> Term
-freshHole = undefined
+freshHoleTerm :: Unit -> Term
+freshHoleTerm = undefined
 
 -- Weakening & Substitution
-
-data Weakening -- TODO
-
-data Substitution -- TODO
+type TypeWeakening
+  = List TypeName
