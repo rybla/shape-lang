@@ -21,12 +21,13 @@ data Type
 
 data Term
   = LambdaTerm [Id] Block -- the names are specified in its `ArrowType`
-  | HoleTerm
   | NeutralTerm NeutralTerm
 -- All of terms in a hole are of a base type, and they are all neutral forms.
 -- Consider having a separate type for neutrals, so reflect that in typing?
 
-data NeutralTerm = Neutral Id [Term]
+data NeutralTerm
+    = Neutral Id [Term]
+    | HoleTerm
 
 -- Parameter, Binding, Id
 
