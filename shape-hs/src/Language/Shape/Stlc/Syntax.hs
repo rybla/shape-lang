@@ -4,11 +4,12 @@ import Data.Symbol
 
 type Program = Block
 
-data Block = Block [Definition] NeutralTerm
+data Block = Block [Definition] [NeutralTerm] NeutralTerm
 
 data Definition
   = TermDefinition Id Type Term
-  | DataDefinition Id [Constructor]
+  | DataDefinition Name Id Id [Constructor]
+  -- TODO: add Id for name of recursor, and also make TypeId and TermId types everywhere.
 
 data Constructor = Constructor Id [(Name, Type)]
 
@@ -20,24 +21,12 @@ data Type
 
 data Term
   = LambdaTerm [Id] Block -- the names are specified in its `ArrowType`
-  | HoleTerm [NeutralTerm]
+  | HoleTerm
   | NeutralTerm NeutralTerm
 -- All of terms in a hole are of a base type, and they are all neutral forms.
 -- Consider having a separate type for neutrals, so reflect that in typing?
 
-data NeutralTerm
-  = MatchTerm
-      Id -- type of term to match on (must be a DataType)
-      Term -- term to match on
-      [Case] -- cases of matched term
-  | Neutral Id [Term]
-
-data Case
-  = Case
-      Id -- to the `Constructor`
-      [Id] -- instances of the `Constructor`'s `Parameter`s
-      Block
-      -- really just a lambda term
+data NeutralTerm = Neutral Id [Term]
 
 -- Parameter, Binding, Id
 
