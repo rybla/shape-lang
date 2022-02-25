@@ -95,9 +95,10 @@ chTerm gamma (ArrowChange ics tc) _ = error "only a lambda should be an arrow ty
 termToNeutral :: Changes -> Term -> Maybe NeutralTerm
 -- For now, just forgets everything that was in the definitions section of the block. TODO: figure out what it should do.
 termToNeutral gamma (LambdaTerm syms (Block _ t))
-  = termToNeutral gamma (searchTerm (union deletions (fst gamma), (snd gamma)) t)
-  where deletions :: Map Id VarChange
-        deletions = fromList (map (\x -> (x, VariableDeletion)) syms)
+  -- = termToNeutral gamma (searchTerm (union deletions (fst gamma), (snd gamma)) t)
+  = searchNeutral (union deletions (fst gamma), (snd gamma)) t
+    where deletions :: Map Id VarChange
+          deletions = fromList (map (\x -> (x, VariableDeletion)) syms)
 termToNeutral gamma (HoleTerm tes) = Nothing
 termToNeutral gamma (NeutralTerm nt) = Just nt
 

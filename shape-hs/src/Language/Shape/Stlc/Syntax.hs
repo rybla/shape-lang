@@ -4,7 +4,7 @@ import Data.Symbol
 
 type Program = Block
 
-data Block = Block [Definition] Term
+data Block = Block [Definition] NeutralTerm
 
 data Definition
   = TermDefinition Id Type Term
